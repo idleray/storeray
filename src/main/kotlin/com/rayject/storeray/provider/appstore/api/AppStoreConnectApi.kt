@@ -97,6 +97,31 @@ class AppStoreConnectApi(private val token: String) {
         patch("$baseUrl/subscriptionLocalizations/$localizationId", body)
     }
 
+    suspend fun fetchAppStoreVersions(appId: String, versionString: String): List<AscResource> {
+        val response = get("$baseUrl/apps/$appId/appStoreVersions", mapOf("filter[versionString]" to versionString))
+        val body: AscListResponse<AscResource> = response.body()
+        return body.data.filter { it.type == "appStoreVersions" }
+    }
+
+    suspend fun fetchAppStoreVersionLocalizations(versionId: String): List<AscResource> {
+        val response = get("$baseUrl/appStoreVersions/$versionId/appStoreVersionLocalizations")
+        val body: AscListResponse<AscResource> = response.body()
+        return body.data.filter { it.type == "appStoreVersionLocalizations" }
+    }
+
+    suspend fun updateAppStoreVersionLocalization(localizationId: String, whatsNew: String) {
+        val body = buildJsonObject {
+            put("data", buildJsonObject {
+                put("type", "appStoreVersionLocalizations")
+                put("id", localizationId)
+                put("attributes", buildJsonObject {
+                    put("whatsNew", whatsNew)
+                })
+            })
+        }
+        patch("$baseUrl/appStoreVersionLocalizations/$localizationId", body)
+    }
+
     private suspend fun get(url: String, params: Map<String, String> = emptyMap()): HttpResponse {
         val response = client.get(url) {
             header(HttpHeaders.Authorization, "Bearer $token")

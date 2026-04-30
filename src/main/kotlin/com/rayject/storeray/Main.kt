@@ -6,6 +6,8 @@ import com.rayject.storeray.cli.StoreRay
 import com.rayject.storeray.cli.iap.IapCommand
 import com.rayject.storeray.cli.iap.IapInspectCommand
 import com.rayject.storeray.cli.iap.IapSyncCommand
+import com.rayject.storeray.cli.releasenotes.ReleaseNotesCommand
+import com.rayject.storeray.cli.releasenotes.ReleaseNotesUpdateCommand
 
 fun main(args: Array<String>) {
     StoreRay()
@@ -13,6 +15,9 @@ fun main(args: Array<String>) {
             IapCommand().subcommands(
                 IapSyncCommand(),
                 IapInspectCommand()
+            ),
+            ReleaseNotesCommand().subcommands(
+                ReleaseNotesUpdateCommand()
             )
         )
         .main(args)
