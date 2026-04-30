@@ -22,7 +22,13 @@
 3. **CLI 优先**：命令行界面，方便本地使用和 CI/CD 集成
 4. **渐进式开发**：MVP 只做最核心的两个功能，后续按需扩展
 
-### 1.3 命名
+### 1.3 非目标
+
+- **不是 fastlane 的全面替代**：不做构建、签名、提审等 CI/CD 流程
+- **不做 App 元数据管理**：截图、描述、关键词等暂不涉及
+- **不追求跨平台运行**：只在 JVM 上运行，不考虑 native 编译
+
+### 1.4 命名
 
 项目名 **`storeray`**。
 
@@ -47,22 +53,24 @@
 ### 2.3 CLI 命令预览
 
 ```bash
-# Release Notes —— 更新版本说明
+# Release Notes —— 从 release-notes/1.2.0/ 目录读取各语言 txt 文件并更新
 storeray release-notes update --platform appstore --version 1.2.0
 
-# IAP —— 同步订阅本地化
-storeray iap sync                    # 预览模式（dry-run）
-storeray iap sync --apply            # 执行同步
-storeray iap inspect <product_id>    # 查看单个产品详情
+# IAP —— 根据 products.json 和 localizations/ 目录同步订阅本地化
+storeray iap sync --platform appstore              # 预览模式（dry-run）
+storeray iap sync --platform appstore --apply      # 执行同步
+storeray iap inspect --platform appstore <product_id>  # 查看单个产品详情
 ```
 
-### 2.4 配置文件结构（沿用现有格式）
+### 2.4 配置文件结构
+
+配置文件全部使用 JSON 格式，通过 `kotlinx.serialization` 原生解析，无需额外依赖。
 
 ```
 storeray/
-├── storeray.yaml               # 全局配置（认证、App 信息）
-├── products.yaml               # IAP 产品定义
-├── localizations/              # IAP 本地化文案 (JSON)
+├── storeray.json               # 全局配置（认证、App 信息）
+├── products.json               # IAP 产品定义与语言配置
+├── localizations/              # IAP 本地化文案
 │   ├── monthly.json
 │   └── yearly.json
 └── release-notes/              # 版本更新说明
@@ -82,24 +90,35 @@ storeray/
 |------|------|------|
 | **语言** | Kotlin (JVM) | 生态成熟，Kotlin 开发者可直接上手 |
 | **构建** | Gradle (独立项目) | 完全独立的 Gradle 工程，不依赖其他项目 |
-| **分发** | Fat JAR → 可选 GraalVM native-image | 初期用 `java -jar`，后续可编译为原生二进制 |
+| **分发** | Fat JAR | 通过 `java -jar storeray.jar` 运行 |
 
 ### 3.2 核心依赖
 
-| 库 | 用途 | 版本 |
+| 库 | 用途 | 备注 |
 |----|------|------|
-| **[Clikt](https://ajalt.github.io/clikt/)** | CLI 参数解析框架 | 5.x |
-| **[Ktor Client (CIO)](https://ktor.io/)** | HTTP 客户端 | 与主项目同版本 (3.4.0) |
-| **[kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)** | JSON 序列化 | 与主项目同版本 |
-| **[kaml](https://github.com/charleskorn/kaml)** | YAML 解析（基于 kotlinx.serialization） | 0.67.x |
-| **[java-jwt](https://github.com/auth0/java-jwt)** | JWT 签名（ES256） | 4.x |
+| **[Clikt](https://ajalt.github.io/clikt/)** | CLI 参数解析框架 | 5.x，Kotlin 社区标准 CLI 框架 |
+| **[Ktor Client (CIO)](https://ktor.io/)** | HTTP 客户端 | 使用最新稳定版 |
+| **[kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)** | JSON 序列化/反序列化 | 同时用于配置解析和 API 通信 |
+| **JWT 签名** | ES256 Token 生成 | 方案见下文讨论 |
+| **[JUnit 5](https://junit.org/junit5/) + [MockK](https://mockk.io/)** | 测试框架 | 单元测试与 Mock |
+
+#### JWT 方案选择
+
+App Store Connect API 认证需要 ES256 签名的 JWT Token。有以下方案：
+
+| 方案 | 说明 | 优劣 |
+|------|------|------|
+| **JDK 标准库手写** | 用 `java.security` 直接签名，约 30 行代码 | 零依赖，但需自行维护 |
+| **[jwt-kt](https://github.com/nicosantos/jwt-kt)** | Kotlin Multiplatform JWT 库 | Kotlin 风格，但引入额外依赖 |
+| **[java-jwt](https://github.com/auth0/java-jwt)** | Auth0 出品，Java 库 | 成熟稳定，但非 Kotlin 原生 |
+
+> 推荐：JWT 签名逻辑简单（仅生成 Token，不验证），优先考虑 **JDK 标准库手写**以避免额外依赖。
 
 ### 3.3 为什么选择这些库
 
-- **Clikt**：Kotlin 社区最流行的 CLI 框架，API 简洁，支持子命令、帮助文档自动生成
-- **Ktor Client**：已在主项目中大量使用，团队熟悉，轻量且协程友好
-- **kaml**：与 `kotlinx.serialization` 无缝集成，不需要额外的反射或注解处理
-- **java-jwt**：Auth0 出品，API 简洁，ES256 开箱即用
+- **Clikt**：Kotlin 社区最流行的 CLI 框架，API 简洁，支持子命令、帮助文档自动生成。JetBrains 的 `kotlinx-cli` 已不活跃，Clikt 是唯一成熟选择
+- **Ktor Client**：轻量且协程友好，与 kotlinx.serialization 无缝集成
+- **kotlinx.serialization (JSON)**：配置文件和 API 响应统一使用 JSON，一个库覆盖所有序列化需求。原本考虑用 kaml 支持 YAML 配置，但 kaml 已被作者 archived 不再维护，因此配置格式统一为 JSON
 
 ---
 
@@ -126,41 +145,53 @@ storeray/
 │                                                  │
 │  ┌─────────────┐          ┌─────────────────┐   │
 │  │ StoreProvider│◄─────────│AppStoreProvider │   │
-│  │  (interface) │          └─────────────────┘   │
+│  │  (interface) │          │  ├─ api/        │   │
+│  │              │          │  └─ jwt/        │   │
+│  │              │          └─────────────────┘   │
 │  │              │          ┌─────────────────┐   │
 │  │              │◄─────────│PlayStoreProvider│   │
 │  └─────────────┘          │   (future)      │   │
 │                            └─────────────────┘   │
-└──────────────────────┬──────────────────────────┘
-                       │ 使用
-┌──────────────────────▼──────────────────────────┐
-│                  API Layer                       │
-│        (底层 HTTP 客户端 & 认证)                   │
-│   AppStoreConnectApi / JwtTokenGenerator         │
 └─────────────────────────────────────────────────┘
 ```
 
-### 4.2 Provider 抽象（核心扩展点）
+API 客户端和 JWT 认证作为各 Provider 的**内部实现细节**，不单独成层。
 
-Provider 是整个架构的核心抽象。每个商店平台实现同一组接口，UseCase 层只依赖接口，不感知具体平台：
+### 4.2 核心模型与接口
+
+#### 领域模型
 
 ```kotlin
-// === 核心接口 ===
+data class Subscription(
+    val id: String,                    // App Store Connect 内部 ID
+    val productId: String,             // 产品标识符 (如 com.rayject.fluente.xxx)
+    val referenceName: String,         // 引用名称
+    val state: String                  // 状态
+)
 
+data class LocalizationInfo(
+    val id: String,                    // 本地化记录 ID（用于更新）
+    val locale: String,                // 语言代码 (如 en-US)
+    val name: String,                  // 显示名称
+    val description: String            // 描述
+)
+```
+
+#### Provider 接口
+
+```kotlin
 interface StoreProvider {
     val platform: Platform
-    fun connect(config: StoreConfig)
-
     fun releaseNotes(): ReleaseNotesService
     fun iap(): IapService
 }
 
 interface ReleaseNotesService {
     /** 获取指定版本当前的 release notes */
-    suspend fun fetch(appVersion: String): Map<Locale, String>
+    suspend fun fetch(appVersion: String): Map<String, String>
 
     /** 更新指定版本的 release notes */
-    suspend fun update(appVersion: String, notes: Map<Locale, String>)
+    suspend fun update(appVersion: String, notes: Map<String, String>)
 }
 
 interface IapService {
@@ -168,10 +199,10 @@ interface IapService {
     suspend fun fetchSubscriptions(): List<Subscription>
 
     /** 获取指定产品的本地化 */
-    suspend fun fetchLocalizations(subscriptionId: String): Map<Locale, LocalizationInfo>
+    suspend fun fetchLocalizations(subscriptionId: String): Map<String, LocalizationInfo>
 
     /** 创建本地化 */
-    suspend fun createLocalization(subscriptionId: String, locale: Locale, name: String, description: String)
+    suspend fun createLocalization(subscriptionId: String, locale: String, name: String, description: String)
 
     /** 更新本地化 */
     suspend fun updateLocalization(localizationId: String, name: String, description: String)
@@ -180,16 +211,30 @@ interface IapService {
 enum class Platform { APP_STORE, PLAY_STORE }
 ```
 
+#### Provider 工厂
+
+Provider 通过工厂方法创建，**构造时即完成认证**，确保实例创建后可直接使用：
+
+```kotlin
+object StoreProviderFactory {
+    fun create(platform: Platform, config: StoreConfig): StoreProvider = when (platform) {
+        Platform.APP_STORE -> AppStoreProvider(config)  // 构造时完成 JWT 认证
+        Platform.PLAY_STORE -> TODO("Play Store 支持待实现")
+    }
+}
+```
+
 ### 4.3 接入新平台的扩展方式
 
-以后接入 Play Store 时，只需要：
+以后接入 Play Store 时，需要：
 
 1. 实现 `PlayStoreProvider : StoreProvider`
 2. 实现 `PlayStoreReleaseNotesService : ReleaseNotesService`
 3. 实现 `PlayStoreIapService : IapService`
-4. 在 CLI 层注册新平台
+4. 在 `StoreProviderFactory` 和 CLI 层注册新平台
 
-**UseCase 和 CLI 层的代码完全不需要修改。**
+UseCase 层的代码尽量不需要修改（视平台概念差异程度而定）。
+
 
 ### 4.4 项目结构
 
@@ -220,31 +265,30 @@ storeray/
 │   │
 │   ├── provider/                       # Provider 层 —— 平台抽象
 │   │   ├── StoreProvider.kt            # 接口定义
+│   │   ├── StoreProviderFactory.kt     # Provider 工厂
 │   │   ├── ReleaseNotesService.kt
 │   │   ├── IapService.kt
 │   │   └── appstore/                   # App Store Connect 实现
 │   │       ├── AppStoreProvider.kt
 │   │       ├── AppStoreReleaseNotesService.kt
 │   │       ├── AppStoreIapService.kt
+│   │       ├── jwt/                    # JWT 签名实现
+│   │       │   └── JwtSigner.kt
 │   │       └── api/                    # 底层 API 封装
 │   │           ├── AppStoreConnectApi.kt
-│   │           ├── JwtTokenGenerator.kt
 │   │           └── model/              # API 响应模型
-│   │               ├── AppResponse.kt
-│   │               ├── SubscriptionResponse.kt
-│   │               └── LocalizationResponse.kt
+│   │
+│   ├── model/                          # 核心领域模型
+│   │   ├── Subscription.kt
+│   │   └── LocalizationInfo.kt
 │   │
 │   ├── config/                         # 配置加载
-│   │   ├── StoreCliConfig.kt           # 全局配置模型
+│   │   ├── StoreConfig.kt              # 全局配置模型
 │   │   ├── ProductsConfig.kt           # 产品配置模型
-│   │   └── ConfigLoader.kt            # YAML/JSON 加载器
-│   │
-│   ├── validator/                      # 校验逻辑
-│   │   └── LocalizationValidator.kt
+│   │   └── ConfigLoader.kt             # JSON 加载器
 │   │
 │   └── util/                           # 工具类
-│       ├── Console.kt                  # 终端输出美化 (emoji, 颜色)
-│       └── Locale.kt                   # Locale 类型定义
+│       └── Console.kt                  # 终端输出美化 (emoji, 颜色)
 │
 ├── src/test/kotlin/                    # 单元测试
 │
@@ -256,8 +300,10 @@ storeray/
 
 | 决策 | 选择 | 考量 |
 |------|------|------|
-| UseCase 是否用协程 | 是，`suspend fun` | Ktor Client 天然协程，保持一致 |
-| Provider 如何选择 | CLI 参数 `--platform` | 默认 `appstore`，未来支持 `playstore` |
-| 配置文件格式 | YAML (全局/产品) + JSON (本地化) | 沿用现有 Ruby 脚本的格式，降低迁移成本 |
-| 错误处理 | 自定义异常 + Clikt 的 `PrintMessage` | CLI 工具需要友好的错误输出，不能抛 stacktrace |
-| 日志/输出 | 自定义 Console 工具类 | 带 emoji 和颜色，与现有 Ruby 脚本体验一致 |
+| **配置文件格式** | 全部使用 JSON | 依赖 kotlinx.serialization，零额外依赖，方便与现有的本地化 JSON 文件统一 |
+| **Provider 创建** | 工厂模式 + 构造时认证 | 避免使用者忘记调用 `connect()`，保证 Provider 实例的可用性 |
+| **DI 方式** | 手动依赖注入 | CLI 工具生命周期短，结构简单，无需引入 Koin/Kodein 增加体积 |
+| **Token 刷新** | 暂不处理 | App Store JWT 有效期 20 分钟，足够覆盖一次典型的同步任务 |
+| **并发策略** | 协程并行获取数据，串行提交修改 | 兼顾执行效率与避免触发 App Store Connect API 的速率限制 |
+| **幂等性** | 差量更新 (Diff-based) | `iap sync` 会先获取远端数据进行对比，只提交变更，重复执行安全 |
+| **错误处理** | 自定义异常 + `PrintMessage` | CLI 工具需要友好的终端错误输出，避免直接抛出 StackTrace |
