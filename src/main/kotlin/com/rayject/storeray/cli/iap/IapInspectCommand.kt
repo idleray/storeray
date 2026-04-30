@@ -11,9 +11,10 @@ import com.rayject.storeray.util.Console
 import kotlinx.coroutines.runBlocking
 
 class IapInspectCommand : CliktCommand(
-    name = "inspect",
-    help = "查看单个 IAP 产品的详细信息和在线文案"
+    name = "inspect"
 ) {
+    override fun help(context: com.github.ajalt.clikt.core.Context) = "查看单个 IAP 产品的详细信息和在线文案"
+
     private val productId by argument(help = "产品 ID (如 com.rayject.fluente.xxx)")
     
     private val platform by option("--platform", help = "目标商店平台 (appstore, playstore)").default("appstore")

@@ -11,9 +11,10 @@ import com.rayject.storeray.usecase.SyncIapUseCase
 import kotlinx.coroutines.runBlocking
 
 class IapSyncCommand : CliktCommand(
-    name = "sync",
-    help = "同步 IAP 的多语言本地化文案"
+    name = "sync"
 ) {
+    override fun help(context: com.github.ajalt.clikt.core.Context) = "同步 IAP 的多语言本地化文案"
+
     private val apply by option("--apply", help = "执行实际同步（默认是预览模式）").flag(default = false)
     
     private val platform by option("--platform", help = "目标商店平台 (appstore, playstore)").default("appstore")
