@@ -22,10 +22,9 @@ class ReleaseNotesUpdateCommand : CliktCommand(
     
     private val platform by option("--platform", help = "目标商店平台 (appstore, playstore)").default("appstore")
     
-    private val dir by option("-d", "--dir", help = "工作区目录（默认: ./storeray）").default("./storeray")
-
     override fun run() = runBlocking {
         try {
+            val dir = com.rayject.storeray.cli.GlobalState.workspaceDir
             val storeConfig = ConfigLoader.loadStoreConfig("$dir/storeray.json")
             val localNotes = ConfigLoader.loadReleaseNotes("$dir/metadata/release_notes", appVersion)
             
