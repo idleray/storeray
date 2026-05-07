@@ -9,9 +9,9 @@ object GlobalState {
 }
 
 class StoreRay : CliktCommand() {
-    override fun help(context: com.github.ajalt.clikt.core.Context) = "StoreRay — 轻量级 App Store Connect / Google Play CLI 工具"
+    override fun help(context: com.github.ajalt.clikt.core.Context) = "StoreRay — A lightweight CLI for App Store Connect & Google Play"
     
-    val dir by option("-d", "--dir", help = "工作区目录（默认: ./storeray）").default("./storeray")
+    val dir by option("-d", "--dir", help = "Workspace directory (default: ./storeray)").default("./storeray")
     
     override fun run() {
         GlobalState.workspaceDir = dir

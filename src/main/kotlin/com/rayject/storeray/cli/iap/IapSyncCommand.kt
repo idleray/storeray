@@ -13,11 +13,11 @@ import kotlinx.coroutines.runBlocking
 class IapSyncCommand : CliktCommand(
     name = "sync"
 ) {
-    override fun help(context: com.github.ajalt.clikt.core.Context) = "同步 IAP 的多语言本地化文案"
+    override fun help(context: com.github.ajalt.clikt.core.Context) = "Sync IAP localization metadata"
 
-    private val apply by option("--apply", help = "执行实际同步（默认是预览模式）").flag(default = false)
+    private val apply by option("--apply", help = "Apply changes to the store (default: dry-run)").flag(default = false)
     
-    private val platform by option("--platform", help = "目标商店平台 (appstore, playstore)").default("appstore")
+    private val platform by option("--platform", help = "Target store platform (appstore, playstore)").default("appstore")
     
     override fun run() = runBlocking {
         try {
@@ -40,7 +40,7 @@ class IapSyncCommand : CliktCommand(
             useCase.execute(dryRun = !apply)
             
         } catch (e: Exception) {
-            echo("❌ 错误: ${e.message}", err = true)
+            echo("❌ Error: ${e.message}", err = true)
             // if (debug) e.printStackTrace() 也可以在这里添加 debug 支持
         }
     }

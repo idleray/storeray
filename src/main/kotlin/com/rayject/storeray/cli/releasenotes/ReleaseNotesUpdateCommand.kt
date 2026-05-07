@@ -14,13 +14,13 @@ import kotlinx.coroutines.runBlocking
 class ReleaseNotesUpdateCommand : CliktCommand(
     name = "update"
 ) {
-    override fun help(context: com.github.ajalt.clikt.core.Context) = "更新指定版本的 Release Notes"
+    override fun help(context: com.github.ajalt.clikt.core.Context) = "Update Release Notes for a specific version"
 
-    private val appVersion by argument(help = "App Store 上的版本号 (如 1.2.0)")
+    private val appVersion by argument(help = "The version number on the store (e.g., 1.2.0)")
 
-    private val apply by option("--apply", help = "执行实际同步（默认是预览模式）").flag(default = false)
+    private val apply by option("--apply", help = "Apply changes to the store (default: dry-run)").flag(default = false)
     
-    private val platform by option("--platform", help = "目标商店平台 (appstore, playstore)").default("appstore")
+    private val platform by option("--platform", help = "Target store platform (appstore, playstore)").default("appstore")
     
     override fun run() = runBlocking {
         try {
@@ -43,7 +43,7 @@ class ReleaseNotesUpdateCommand : CliktCommand(
             useCase.execute(appVersion = appVersion, dryRun = !apply)
             
         } catch (e: Exception) {
-            echo("❌ 错误: ${e.message}", err = true)
+            echo("❌ Error: ${e.message}", err = true)
         }
     }
 }

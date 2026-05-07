@@ -9,15 +9,15 @@ class SyncReleaseNotesUseCase(
 ) {
 
     suspend fun execute(appVersion: String, dryRun: Boolean) {
-        Console.step(if (dryRun) "预览模式（不会实际修改 Release Notes）" else "执行 Release Notes 同步")
+        Console.step(if (dryRun) "Dry-run mode (no changes will be applied to Release Notes)" else "Executing Release Notes sync")
         
         if (localNotes.isEmpty()) {
-            Console.error("未在工作区找到版本 $appVersion 的 Release Notes。")
+            Console.error("No Release Notes found in the workspace for version $appVersion.")
             return
         }
 
         try {
-            Console.info("正在获取远端版本 $appVersion 的 Release Notes...")
+            Console.info("Fetching remote Release Notes for version $appVersion...")
             val existingNotes = releaseNotesService.fetch(appVersion)
             
             val localNotesToUpdate = mutableMapOf<String, String>()
@@ -28,36 +28,36 @@ class SyncReleaseNotesUseCase(
                 
                 if (newContent != oldContent) {
                     localNotesToUpdate[locale] = newContent
-                    Console.detail("[~] $locale: 需要更新")
-                    Console.detail("    旧版: \"$oldContent\"")
-                    Console.detail("    新版: \"$newContent\"")
+                    Console.detail("[~] $locale: Needs update")
+                    Console.detail("    Old: \"$oldContent\"")
+                    Console.detail("    New: \"$newContent\"")
                 } else {
-                    Console.detail("[=] $locale: 无需更新")
+                    Console.detail("[=] $locale: Up to date")
                 }
             }
             
             Console.divider()
             
             if (localNotesToUpdate.isEmpty()) {
-                Console.success("所有的 Release Notes 都已是最新状态")
+                Console.success("All Release Notes are already up to date")
                 return
             }
             
-            Console.info("总共有 ${localNotesToUpdate.size} 个语言需要更新")
+            Console.info("Total of ${localNotesToUpdate.size} languages need updating")
             
             if (!dryRun) {
                 try {
                     releaseNotesService.update(appVersion, localNotesToUpdate)
-                    Console.success("Release Notes 更新成功！")
+                    Console.success("Release Notes updated successfully!")
                 } catch (e: Exception) {
-                    Console.error("更新失败: ${e.message}")
+                    Console.error("Update failed: ${e.message}")
                 }
             } else {
-                Console.info("💡 提示: 使用 --apply 参数执行实际同步")
+                Console.info("💡 Hint: Use the --apply flag to execute the actual sync")
             }
             
         } catch (e: Exception) {
-            Console.error("同步过程中发生异常: ${e.message}")
+            Console.error("An error occurred during sync: ${e.message}")
             e.printStackTrace()
         }
     }
