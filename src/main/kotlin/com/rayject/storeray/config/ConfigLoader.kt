@@ -9,7 +9,7 @@ object ConfigLoader {
         prettyPrint = true
     }
 
-    fun loadStoreConfig(path: String = "storeray.json"): StoreConfig {
+    fun loadStoreConfig(path: String): StoreConfig {
         val file = File(path)
         if (!file.exists()) {
             throw IllegalArgumentException("配置文件不存在: ${file.absolutePath}")
@@ -17,28 +17,32 @@ object ConfigLoader {
         return json.decodeFromString(file.readText())
     }
 
-    fun loadProductsConfig(path: String = "products.json"): ProductsConfig {
-        val file = File(path)
-        if (!file.exists()) {
-            throw IllegalArgumentException("产品配置文件不存在: ${file.absolutePath}")
+    fun loadIapProducts(dirPath: String): List<IapProductConfig> {
+        val dir = File(dirPath)
+        if (!dir.exists() || !dir.isDirectory) {
+            return emptyList()
         }
-        return json.decodeFromString(file.readText())
-    }
 
-    fun loadLocalizationFile(path: String): Map<String, LocalizationMap> {
-        val file = File(path)
+        return dir.listFiles { file -> file.extension == "json" }
+            ?.map { file ->
+                try {
+                    json.decodeFromString<IapProductConfig>(file.readText())
+                } catch (e: Exception) {
+                    throw IllegalArgumentException("解析文件失败: ${file.absolutePath}, 错误: ${e.message}")
+                }
+            } ?: emptyList()
+    }
+    
+    fun loadReleaseNotes(dirPath: String, version: String): Map<String, String> {
+        val file = File(dirPath, "$version.json")
         if (!file.exists()) {
-            throw IllegalArgumentException("本地化文件不存在: ${file.absolutePath}")
+            return emptyMap()
         }
-        return json.decodeFromString(file.readText())
+        
+        try {
+            return json.decodeFromString(file.readText())
+        } catch (e: Exception) {
+             throw IllegalArgumentException("解析 Release Notes 失败: ${file.absolutePath}, 错误: ${e.message}")
+        }
     }
 }
-
-/**
- * 对应 monthly.json / yearly.json 中的键值对结构
- */
-@kotlinx.serialization.Serializable
-data class LocalizationMap(
-    val name: String,
-    val description: String
-)

@@ -1,32 +1,34 @@
 package com.rayject.storeray.usecase
 
-import com.rayject.storeray.config.ConfigLoader
-import com.rayject.storeray.config.LocalizationMap
-import com.rayject.storeray.config.ProductsConfig
+import com.rayject.storeray.config.IapProductConfig
+import com.rayject.storeray.config.IapLocalizationConfig
 import com.rayject.storeray.model.LocalizationInfo
 import com.rayject.storeray.model.Subscription
 import com.rayject.storeray.provider.IapService
 import com.rayject.storeray.util.Console
-import java.io.File
 
 class SyncIapUseCase(
     private val iapService: IapService,
-    private val productsConfig: ProductsConfig,
-    private val localizationsDir: String = "localizations"
+    private val products: List<IapProductConfig>
 ) {
 
     suspend fun execute(dryRun: Boolean) {
         Console.step(if (dryRun) "预览模式（不会实际修改）" else "执行同步")
 
+        if (products.isEmpty()) {
+            Console.error("未在工作区找到任何 IAP 配置文件。请检查 metadata/iap 目录。")
+            return
+        }
+
         try {
             Console.info("正在获取远端订阅列表...")
             val subscriptions = iapService.fetchSubscriptions()
-            Console.info("共找到 ${subscriptions.size} 个订阅产品")
+            Console.info("共找到 ${subscriptions.size} 个远端订阅产品")
 
             var totalChanges = 0
             var totalErrors = 0
 
-            for (productConfig in productsConfig.products) {
+            for (productConfig in products) {
                 Console.divider()
                 Console.info("处理: ${productConfig.referenceName} (ID: ${productConfig.productId})")
 
@@ -39,21 +41,12 @@ class SyncIapUseCase(
 
                 Console.detail("Subscription ID: ${subscription.id}")
 
-                // 读取本地化配置
-                val locFilePath = "$localizationsDir/${productConfig.localizationFile}"
-                val localizations = try {
-                    ConfigLoader.loadLocalizationFile(locFilePath)
-                } catch (e: Exception) {
-                    Console.error("无法加载本地化文件: $locFilePath - ${e.message}")
-                    totalErrors++
-                    continue
-                }
-
+                val localizations = productConfig.localizations
+                
                 // 验证本地化文案的合法性
                 val validationErrors = com.rayject.storeray.validator.LocalizationValidator.validate(
                     productId = productConfig.productId,
-                    localizations = localizations,
-                    localesConfig = productsConfig.locales
+                    localizations = localizations
                 )
                 if (validationErrors.isNotEmpty()) {
                     Console.error("验证失败:")
@@ -97,7 +90,7 @@ class SyncIapUseCase(
 
     private suspend fun syncProductLocalizations(
         subscriptionId: String,
-        localizations: Map<String, LocalizationMap>,
+        localizations: Map<String, IapLocalizationConfig>,
         existingLocalizations: Map<String, LocalizationInfo>,
         dryRun: Boolean
     ): Pair<Int, Int> { // Returns Pair<ChangesCount, ErrorsCount>

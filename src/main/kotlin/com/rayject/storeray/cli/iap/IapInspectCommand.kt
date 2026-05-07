@@ -19,11 +19,11 @@ class IapInspectCommand : CliktCommand(
     
     private val platform by option("--platform", help = "目标商店平台 (appstore, playstore)").default("appstore")
     
-    private val configPath by option("-c", "--config", help = "配置文件路径（默认: storeray.json）").default("storeray.json")
+    private val dir by option("-d", "--dir", help = "工作区目录（默认: ./storeray）").default("./storeray")
 
     override fun run() = runBlocking {
         try {
-            val storeConfig = ConfigLoader.loadStoreConfig(configPath)
+            val storeConfig = ConfigLoader.loadStoreConfig("$dir/storeray.json")
             
             val platformEnum = when (platform.lowercase()) {
                 "appstore" -> Platform.APP_STORE

@@ -19,14 +19,12 @@ class IapSyncCommand : CliktCommand(
     
     private val platform by option("--platform", help = "目标商店平台 (appstore, playstore)").default("appstore")
     
-    private val configPath by option("-c", "--config", help = "配置文件路径（默认: storeray.json）").default("storeray.json")
+    private val dir by option("-d", "--dir", help = "工作区目录（默认: ./storeray）").default("./storeray")
     
-    private val productsPath by option("-p", "--products", help = "产品配置文件路径（默认: products.json）").default("products.json")
-
     override fun run() = runBlocking {
         try {
-            val storeConfig = ConfigLoader.loadStoreConfig(configPath)
-            val productsConfig = ConfigLoader.loadProductsConfig(productsPath)
+            val storeConfig = ConfigLoader.loadStoreConfig("$dir/storeray.json")
+            val products = ConfigLoader.loadIapProducts("$dir/metadata/iap")
             
             val platformEnum = when (platform.lowercase()) {
                 "appstore" -> Platform.APP_STORE
@@ -37,7 +35,7 @@ class IapSyncCommand : CliktCommand(
             val provider = StoreProviderFactory.create(platformEnum, storeConfig)
             val useCase = SyncIapUseCase(
                 iapService = provider.iap(),
-                productsConfig = productsConfig
+                products = products
             )
             
             useCase.execute(dryRun = !apply)

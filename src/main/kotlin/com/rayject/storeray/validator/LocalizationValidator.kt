@@ -1,7 +1,6 @@
 package com.rayject.storeray.validator
 
-import com.rayject.storeray.config.LocaleConfig
-import com.rayject.storeray.config.LocalizationMap
+import com.rayject.storeray.config.IapLocalizationConfig
 
 object LocalizationValidator {
     private const val NAME_MAX_LENGTH = 30
@@ -13,18 +12,9 @@ object LocalizationValidator {
      */
     fun validate(
         productId: String,
-        localizations: Map<String, LocalizationMap>,
-        localesConfig: List<LocaleConfig>
+        localizations: Map<String, IapLocalizationConfig>
     ): List<String> {
         val errors = mutableListOf<String>()
-
-        // 检查必填语言
-        val requiredLocales = localesConfig.filter { it.required }.map { it.code }
-        for (locale in requiredLocales) {
-            if (!localizations.containsKey(locale)) {
-                errors.add("缺少必填语言: $locale")
-            }
-        }
 
         // 检查每个语言的字段
         for ((locale, data) in localizations) {
@@ -34,7 +24,7 @@ object LocalizationValidator {
         return errors
     }
 
-    private fun validateLocale(locale: String, data: LocalizationMap): List<String> {
+    private fun validateLocale(locale: String, data: IapLocalizationConfig): List<String> {
         val errors = mutableListOf<String>()
 
         // 检查 name 字段

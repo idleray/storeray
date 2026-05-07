@@ -1,39 +1,29 @@
 package com.rayject.storeray.usecase
 
-import com.rayject.storeray.config.ProductsConfig
 import com.rayject.storeray.provider.ReleaseNotesService
 import com.rayject.storeray.util.Console
-import java.io.File
 
 class SyncReleaseNotesUseCase(
     private val releaseNotesService: ReleaseNotesService,
-    private val productsConfig: ProductsConfig,
-    private val releaseNotesDir: String = "release_notes"
+    private val localNotes: Map<String, String>
 ) {
 
     suspend fun execute(appVersion: String, dryRun: Boolean) {
         Console.step(if (dryRun) "预览模式（不会实际修改 Release Notes）" else "执行 Release Notes 同步")
         
+        if (localNotes.isEmpty()) {
+            Console.error("未在工作区找到版本 $appVersion 的 Release Notes。")
+            return
+        }
+
         try {
             Console.info("正在获取远端版本 $appVersion 的 Release Notes...")
             val existingNotes = releaseNotesService.fetch(appVersion)
             
             val localNotesToUpdate = mutableMapOf<String, String>()
             
-            // 使用 products.json 中定义的 required locales 作为目标语言列表
-            val targetLocales = productsConfig.locales.map { it.code }
-            
-            for (locale in targetLocales) {
-                val noteFile = File("$releaseNotesDir/$locale.txt")
-                if (!noteFile.exists()) {
-                    val isRequired = productsConfig.locales.find { it.code == locale }?.required == true
-                    if (isRequired) {
-                        Console.warning("缺少必填语言的 Release Notes 文件: ${noteFile.path}")
-                    }
-                    continue
-                }
-                
-                val newContent = noteFile.readText().trim()
+            for ((locale, newContentRaw) in localNotes) {
+                val newContent = newContentRaw.trim()
                 val oldContent = existingNotes[locale]?.trim() ?: ""
                 
                 if (newContent != oldContent) {
