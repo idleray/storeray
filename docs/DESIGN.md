@@ -53,32 +53,39 @@
 ### 2.3 CLI 命令预览
 
 ```bash
-# Release Notes —— 从 release-notes/1.2.0/ 目录读取各语言 txt 文件并更新
+# Release Notes —— 从指定工作区（默认 ./storeray）读取数据并更新
 storeray release-notes update --platform appstore --version 1.2.0
 
-# IAP —— 根据 products.json 和 localizations/ 目录同步订阅本地化
+# IAP —— 同步工作区内的 IAP 本地化数据
 storeray iap sync --platform appstore              # 预览模式（dry-run）
 storeray iap sync --platform appstore --apply      # 执行同步
 storeray iap inspect --platform appstore <product_id>  # 查看单个产品详情
+
+# 指定不同的工作区目录（支持绝对路径或相对路径，实现配置分离）
+storeray iap sync --dir /Users/xxx/StoreMetadata/App1
 ```
 
-### 2.4 配置文件结构
+### 2.4 工作区与配置文件结构
 
-配置文件全部使用 JSON 格式，通过 `kotlinx.serialization` 原生解析，无需额外依赖。
+工具采用**“工作区（Workspace）”**的设计理念。所有配置和业务数据被高度内聚在一个文件夹中。配置文件使用 JSON 格式，通过 `kotlinx.serialization` 原生解析。
 
+```text
+storeray/                      # 工具的工作区目录（可通过 --dir 参数指定位置）
+├── storeray.json              # 全局配置（认证信息、App 信息等）
+├── metadata/                  # 业务数据根目录
+│   ├── iap/                   # IAP 翻译数据（自包含：产品属性 + 所有语言翻译）
+│   │   ├── monthly.json
+│   │   └── yearly.json
+│   └── release_notes/         # 版本更新说明（自包含：每个版本一个文件，包含所有语言）
+│       ├── 1.1.0.json
+│       └── 1.2.0.json
 ```
-storeray/
-├── storeray.json               # 全局配置（认证、App 信息）
-├── products.json               # IAP 产品定义与语言配置
-├── localizations/              # IAP 本地化文案
-│   ├── monthly.json
-│   └── yearly.json
-└── release-notes/              # 版本更新说明
-    └── 1.2.0/
-        ├── en-US.txt
-        ├── zh-Hans.txt
-        └── zh-Hant.txt
-```
+
+**设计特点：**
+- **位置解耦**：工作区文件夹无需强制放在宿主工程代码中，可通过 `--dir` 指定任意路径，实现多项目集中管理或代码数据分离。
+- **自包含实体**：每个 JSON 文件就是一个完整的逻辑实体（一个内购产品，或一个版本的更新说明），无需跨文件关联，易于查阅和自动化处理。
+- **数据驱动同步**：工具直接根据 JSON 文件内的语言键值（如 `"en-US"`, `"zh-Hans"`）动态同步商店，无需全局维护固定的 locales 列表。
+- **动态发现机制**：新增产品或新版本只需在 `metadata/` 对应层级下添加 JSON 文件，工具自动扫描读取，无需维护额外的索引清单。
 
 ---
 
@@ -283,9 +290,9 @@ storeray/
 │   │   └── LocalizationInfo.kt
 │   │
 │   ├── config/                         # 配置加载
-│   │   ├── StoreConfig.kt              # 全局配置模型
-│   │   ├── ProductsConfig.kt           # 产品配置模型
-│   │   └── ConfigLoader.kt             # JSON 加载器
+│   │   ├── StoreConfig.kt              # 全局配置模型（纯认证/项目信息）
+│   │   ├── IapProductConfig.kt         # IAP 产品自包含配置模型
+│   │   └── ConfigLoader.kt             # JSON 目录加载器
 │   │
 │   └── util/                           # 工具类
 │       └── Console.kt                  # 终端输出美化 (emoji, 颜色)
