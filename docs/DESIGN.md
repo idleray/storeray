@@ -50,19 +50,76 @@
 - **不做** App 元数据管理（截图、描述、关键词等）
 - **不做** 构建和提审流程
 
-### 2.3 CLI 命令预览
+### 2.3 CLI 命令帮助与说明
 
+工具采用标准的命令行子命令架构。你可以通过 `--help` 随时查看各层级的可用参数和功能。
+
+**1. 根命令 (StoreRay)**
+```text
+Usage: store-ray [<options>] <command> [<args>]...
+
+  StoreRay — A lightweight CLI for App Store Connect & Google Play
+
+Options:
+  -d, --dir=<text>  Workspace directory (default: ./storeray)
+  -h, --help        Show this message and exit
+
+Commands:
+  iap            IAP (In-App Purchase) management tools
+  release-notes  Release Notes management tools
+```
+
+**2. IAP 同步命令 (iap sync)**
+```text
+Usage: store-ray iap sync [<options>]
+
+  Sync IAP localization metadata
+
+Options:
+  --apply            Apply changes to the store (default: dry-run)
+  --platform=<text>  Target store platform (appstore, playstore)
+  -h, --help         Show this message and exit
+```
+
+**3. IAP 查看命令 (iap inspect)**
+```text
+Usage: store-ray iap inspect [<options>] <product_id>
+
+  Inspect details and online localizations of a single IAP product
+
+Options:
+  --platform=<text>  Target store platform (appstore, playstore)
+  -h, --help         Show this message and exit
+```
+
+**4. Release Notes 更新命令 (release-notes update)**
+```text
+Usage: store-ray release-notes update [<options>] <app_version>
+
+  Update Release Notes for a specific version
+
+Options:
+  --apply            Apply changes to the store (default: dry-run)
+  --platform=<text>  Target store platform (appstore, playstore)
+  -h, --help         Show this message and exit
+```
+
+**常用执行示例：**
 ```bash
-# Release Notes —— 从指定工作区（默认 ./storeray）读取数据并更新
-storeray release-notes update --platform appstore --version 1.2.0
+# 执行 Release Notes 更新（需指定线上版本号）
+storeray release-notes update --platform appstore 1.2.0
 
-# IAP —— 同步工作区内的 IAP 本地化数据
-storeray iap sync --platform appstore              # 预览模式（dry-run）
-storeray iap sync --platform appstore --apply      # 执行同步
-storeray iap inspect --platform appstore <product_id>  # 查看单个产品详情
+# 预览 IAP 同步变化（dry-run）
+storeray iap sync --platform appstore
 
-# 指定不同的工作区目录（支持绝对路径或相对路径，实现配置分离）
-storeray iap sync --dir /Users/xxx/StoreMetadata/App1
+# 确认并执行 IAP 同步（带上 --apply）
+storeray iap sync --platform appstore --apply
+
+# 查看线上指定产品的详细信息
+storeray iap inspect --platform appstore com.rayject.fluente.subscription.monthly
+
+# 指定工作区目录（多项目管理）
+storeray iap sync -d /Users/xxx/StoreMetadata/App1
 ```
 
 ### 2.4 工作区与配置文件结构
