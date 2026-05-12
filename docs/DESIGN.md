@@ -65,11 +65,22 @@ Options:
   -h, --help        Show this message and exit
 
 Commands:
+  init           Initialize storeray workspace with templates
   iap            IAP (In-App Purchase) management tools
   release-notes  Release Notes management tools
 ```
 
-**2. IAP 同步命令 (iap sync)**
+**2. 初始化命令 (init)**
+```text
+Usage: store-ray init [<options>]
+
+  Initialize storeray workspace with templates
+
+Options:
+  -h, --help  Show this message and exit
+```
+
+**3. IAP 同步命令 (iap sync)**
 ```text
 Usage: store-ray iap sync [<options>]
 
