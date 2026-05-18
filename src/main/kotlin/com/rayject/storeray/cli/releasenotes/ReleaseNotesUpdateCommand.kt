@@ -61,6 +61,6 @@ class ReleaseNotesUpdateCommand : CliktCommand(
 
     private fun Platform.displayName(): String = when (this) {
         Platform.APP_STORE -> "App Store Connect"
-        Platform.PLAY_STORE -> "Google Play production draft release"
+        Platform.PLAY_STORE -> "Google Play production release"
     }
 }

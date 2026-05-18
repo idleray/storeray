@@ -13,10 +13,10 @@ class PlayStoreReleaseNotesService(
 
     override suspend fun fetchEditableVersion(): String {
         val track = api.fetchProductionTrack()
-        val draftRelease = selectSingleDraftRelease(track)
-        val versionName = parseVersionName(draftRelease.name)
+        val release = selectSingleEditableRelease(track)
+        val versionName = parseVersionName(release.name)
 
-        Console.detail("Selected Play Store production draft release: ${draftRelease.name}")
+        Console.detail("Selected Play Store production release: ${release.name} (${release.status})")
         return versionName
     }
 
@@ -67,14 +67,23 @@ class PlayStoreReleaseNotesService(
         }
     }
 
-    private fun selectSingleDraftRelease(track: Track): TrackRelease {
-        val draftReleases = track.releases.orEmpty().filter { it.status == DRAFT_STATUS }
-        return when (draftReleases.size) {
-            0 -> throw RuntimeException("No draft release found in Google Play production track. Promote the internal test release to production and save it as draft first.")
-            1 -> draftReleases.first()
+    private fun selectSingleEditableRelease(track: Track): TrackRelease {
+        val editableReleases = track.releases
+            .orEmpty()
+            .filter { it.status in EDITABLE_STATUSES }
+            .sortedBy { EDITABLE_STATUSES.indexOf(it.status) }
+
+        return when (editableReleases.size) {
+            0 -> throw RuntimeException("No draft or completed release found in Google Play production track.")
+            1 -> editableReleases.first()
             else -> {
-                val names = draftReleases.joinToString(", ") { it.name ?: "(unnamed)" }
-                throw RuntimeException("Multiple draft releases found in Google Play production track: $names")
+                val draftReleases = editableReleases.filter { it.status == DRAFT_STATUS }
+                if (draftReleases.size == 1) {
+                    return draftReleases.first()
+                }
+
+                val names = editableReleases.joinToString(", ") { "${it.name ?: "(unnamed)"} (${it.status ?: "unknown"})" }
+                throw RuntimeException("Multiple editable releases found in Google Play production track: $names")
             }
         }
     }
@@ -82,15 +91,21 @@ class PlayStoreReleaseNotesService(
     private fun selectDraftReleaseByVersion(track: Track, appVersion: String): TrackRelease {
         val matches = track.releases
             .orEmpty()
-            .filter { it.status == DRAFT_STATUS }
+            .filter { it.status in EDITABLE_STATUSES }
             .filter { parseVersionNameOrNull(it.name) == appVersion }
+            .sortedBy { EDITABLE_STATUSES.indexOf(it.status) }
 
         return when (matches.size) {
-            0 -> throw RuntimeException("No draft release matching version $appVersion found in Google Play production track.")
+            0 -> throw RuntimeException("No draft or completed release matching version $appVersion found in Google Play production track.")
             1 -> matches.first()
             else -> {
-                val names = matches.joinToString(", ") { it.name ?: "(unnamed)" }
-                throw RuntimeException("Multiple draft releases match version $appVersion in Google Play production track: $names")
+                val draftMatches = matches.filter { it.status == DRAFT_STATUS }
+                if (draftMatches.size == 1) {
+                    return draftMatches.first()
+                }
+
+                val names = matches.joinToString(", ") { "${it.name ?: "(unnamed)"} (${it.status ?: "unknown"})" }
+                throw RuntimeException("Multiple editable releases match version $appVersion in Google Play production track: $names")
             }
         }
     }
@@ -117,6 +132,8 @@ class PlayStoreReleaseNotesService(
 
     private companion object {
         const val DRAFT_STATUS = "draft"
-        val RELEASE_NAME_REGEX = Regex("""^\s*\d+\((.+)\)\s*$""")
+        const val COMPLETED_STATUS = "completed"
+        val EDITABLE_STATUSES = listOf(DRAFT_STATUS, COMPLETED_STATUS)
+        val RELEASE_NAME_REGEX = Regex("""^\s*\d+\s*\((.+)\)\s*$""")
     }
 }

@@ -45,7 +45,7 @@
 
 ### 2.2 MVP 限定
 
-- **Release Notes 支持 App Store Connect 与 Google Play Store production draft release**
+- **Release Notes 支持 App Store Connect 与 Google Play Store production release**
 - **IAP 只实现 App Store Connect**，但架构预留 Play Store 扩展点
 - **只支持订阅类 IAP**（与现有 Ruby 脚本一致）
 - **不做** App 元数据管理（截图、描述、关键词等）
@@ -116,7 +116,7 @@ Options:
   -h, --help             Show this message and exit
 ```
 
-> **说明**：App Store Connect 会自动检测处于 `PREPARE_FOR_SUBMISSION` 状态的版本，并以该版本号去 `metadata/release_notes/` 目录下匹配对应的 JSON 文件（如 `1.3.0.json`）。Google Play Store 只支持 `production` track 上的 `draft` release，会从 release name 的 `version_code(version_name)` 格式中解析 `version_name`，再匹配同名 JSON 文件。
+> **说明**：App Store Connect 会自动检测处于 `PREPARE_FOR_SUBMISSION` 状态的版本，并以该版本号去 `metadata/release_notes/` 目录下匹配对应的 JSON 文件（如 `1.3.0.json`）。Google Play Store 只支持 `production` track 上的 `draft` 或 `completed` release，优先选择 `draft`；会从 release name 的 `version_code(version_name)` 或 `version_code (version_name)` 格式中解析 `version_name`，再匹配同名 JSON 文件。
 
 **常用执行示例：**
 ```bash
@@ -127,7 +127,7 @@ storeray rn update
 # 确认并执行 Release Notes 更新
 storeray rn update --apply
 
-# 预览 Google Play production draft release 的 Release Notes 更新
+# 预览 Google Play production release 的 Release Notes 更新
 storeray rn update --platform playstore
 
 # 预览 IAP 同步变化（dry-run）
