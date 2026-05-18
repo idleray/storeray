@@ -23,19 +23,19 @@ class ReleaseNotesUpdateCommand : CliktCommand(
     override fun run() = runBlocking {
         try {
             val dir = com.rayject.storeray.cli.GlobalState.workspaceDir
-            val storeConfig = ConfigLoader.loadStoreConfig("$dir/storeray.json")
+            val workspaceConfig = ConfigLoader.loadWorkspaceConfig("$dir/storeray.json")
             
             val platformEnum = when (platform.lowercase()) {
                 "appstore" -> Platform.APP_STORE
-                "playstore" -> throw UnsupportedOperationException("Play Store is not supported yet")
+                "playstore" -> Platform.PLAY_STORE
                 else -> throw IllegalArgumentException("Unknown platform: $platform")
             }
             
-            val provider = StoreProviderFactory.create(platformEnum, storeConfig)
+            val provider = StoreProviderFactory.create(platformEnum, workspaceConfig)
             val releaseNotesService = provider.releaseNotes()
             
-            // Auto-detect the editable version from App Store Connect
-            Console.info("Detecting editable version from App Store Connect...")
+            // Auto-detect the editable version from the selected store.
+            Console.info("Detecting editable version from ${platformEnum.displayName()}...")
             val appVersion = releaseNotesService.fetchEditableVersion()
             Console.success("Found editable version: $appVersion")
             
@@ -57,5 +57,10 @@ class ReleaseNotesUpdateCommand : CliktCommand(
         } catch (e: Exception) {
             echo("❌ Error: ${e.message}", err = true)
         }
+    }
+
+    private fun Platform.displayName(): String = when (this) {
+        Platform.APP_STORE -> "App Store Connect"
+        Platform.PLAY_STORE -> "Google Play production draft release"
     }
 }

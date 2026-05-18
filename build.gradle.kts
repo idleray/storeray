@@ -21,6 +21,11 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
 
+    // Google Play Developer API
+    implementation(libs.google.api.client)
+    implementation(libs.google.auth.oauth2.http)
+    implementation(libs.google.api.services.androidpublisher)
+
     // Testing
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)

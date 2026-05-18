@@ -1,0 +1,122 @@
+package com.rayject.storeray.provider.playstore
+
+import com.google.api.services.androidpublisher.model.LocalizedText
+import com.google.api.services.androidpublisher.model.Track
+import com.google.api.services.androidpublisher.model.TrackRelease
+import com.rayject.storeray.provider.ReleaseNotesService
+import com.rayject.storeray.provider.playstore.api.PlayStorePublisherApi
+import com.rayject.storeray.util.Console
+
+class PlayStoreReleaseNotesService(
+    private val api: PlayStorePublisherApi
+) : ReleaseNotesService {
+
+    override suspend fun fetchEditableVersion(): String {
+        val track = api.fetchProductionTrack()
+        val draftRelease = selectSingleDraftRelease(track)
+        val versionName = parseVersionName(draftRelease.name)
+
+        Console.detail("Selected Play Store production draft release: ${draftRelease.name}")
+        return versionName
+    }
+
+    override suspend fun fetch(appVersion: String): Map<String, String> {
+        val track = api.fetchProductionTrack()
+        val release = selectDraftReleaseByVersion(track, appVersion)
+
+        return release.releaseNotes
+            .orEmpty()
+            .mapNotNull { note ->
+                val language = note.language
+                if (language.isNullOrBlank()) {
+                    null
+                } else {
+                    language to (note.text ?: "")
+                }
+            }
+            .toMap()
+    }
+
+    override suspend fun update(appVersion: String, notes: Map<String, String>) {
+        api.updateProductionTrack { track ->
+            val release = selectDraftReleaseByVersion(track, appVersion)
+            val existingNotes = release.releaseNotes.orEmpty()
+            val localLanguages = notes.keys
+
+            val mergedNotes = mutableListOf<LocalizedText>()
+            val existingLanguages = mutableSetOf<String>()
+
+            for (existing in existingNotes) {
+                val language = existing.language
+                if (language.isNullOrBlank()) {
+                    continue
+                }
+
+                existingLanguages.add(language)
+                val text = if (language in localLanguages) notes.getValue(language).trim() else existing.text
+                mergedNotes.add(LocalizedText().setLanguage(language).setText(text))
+            }
+
+            for ((language, text) in notes) {
+                if (language !in existingLanguages) {
+                    mergedNotes.add(LocalizedText().setLanguage(language).setText(text.trim()))
+                }
+            }
+
+            release.releaseNotes = mergedNotes
+        }
+    }
+
+    private fun selectSingleDraftRelease(track: Track): TrackRelease {
+        val draftReleases = track.releases.orEmpty().filter { it.status == DRAFT_STATUS }
+        return when (draftReleases.size) {
+            0 -> throw RuntimeException("No draft release found in Google Play production track. Promote the internal test release to production and save it as draft first.")
+            1 -> draftReleases.first()
+            else -> {
+                val names = draftReleases.joinToString(", ") { it.name ?: "(unnamed)" }
+                throw RuntimeException("Multiple draft releases found in Google Play production track: $names")
+            }
+        }
+    }
+
+    private fun selectDraftReleaseByVersion(track: Track, appVersion: String): TrackRelease {
+        val matches = track.releases
+            .orEmpty()
+            .filter { it.status == DRAFT_STATUS }
+            .filter { parseVersionNameOrNull(it.name) == appVersion }
+
+        return when (matches.size) {
+            0 -> throw RuntimeException("No draft release matching version $appVersion found in Google Play production track.")
+            1 -> matches.first()
+            else -> {
+                val names = matches.joinToString(", ") { it.name ?: "(unnamed)" }
+                throw RuntimeException("Multiple draft releases match version $appVersion in Google Play production track: $names")
+            }
+        }
+    }
+
+    private fun parseVersionName(releaseName: String?): String {
+        return parseVersionNameOrNull(releaseName)
+            ?: throw RuntimeException("Cannot read version name from Google Play draft release name: ${releaseName ?: "(empty)"}")
+    }
+
+    private fun parseVersionNameOrNull(releaseName: String?): String? {
+        val name = releaseName?.trim()
+        if (name.isNullOrEmpty()) {
+            return null
+        }
+
+        val match = RELEASE_NAME_REGEX.matchEntire(name)
+        if (match != null) {
+            return match.groupValues[1].trim()
+        }
+
+        Console.warning("Google Play release name does not match version_code(version_name): $name")
+        return name
+    }
+
+    private companion object {
+        const val DRAFT_STATUS = "draft"
+        val RELEASE_NAME_REGEX = Regex("""^\s*\d+\((.+)\)\s*$""")
+    }
+}

@@ -19,8 +19,19 @@ data class StoreConfig(
 )
 
 @Serializable
-data class WorkspaceConfig(
-    @SerialName("app_store")
-    val appStore: StoreConfig? = null
+data class PlayStoreConfig(
+    @SerialName("service_account_json_path")
+    val serviceAccountJsonPath: String,
+
+    @SerialName("package_name")
+    val packageName: String
 )
 
+@Serializable
+data class WorkspaceConfig(
+    @SerialName("app_store")
+    val appStore: StoreConfig? = null,
+
+    @SerialName("play_store")
+    val playStore: PlayStoreConfig? = null
+)

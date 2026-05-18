@@ -45,7 +45,7 @@ class InitCommand : CliktCommand(
         Console.divider()
         Console.success("Initialization complete!")
         Console.info("Next steps:")
-        Console.detail("1. Edit storeray.json with your App Store Connect credentials.")
+        Console.detail("1. Edit storeray.json with your App Store Connect and Google Play credentials.")
         Console.detail("2. Add your IAP products in metadata/iap/.")
         Console.detail("3. Add release notes in metadata/release_notes/.")
     }
@@ -66,6 +66,10 @@ class InitCommand : CliktCommand(
     "issuer_id": "YOUR_ISSUER_ID_HERE",
     "key_file_path": "AuthKey_YOUR_KEY_ID_HERE.p8",
     "bundle_id": "com.example.app"
+  },
+  "play_store": {
+    "service_account_json_path": "google-play-service-account.json",
+    "package_name": "com.example.app"
   }
 }"""
 

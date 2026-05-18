@@ -10,12 +10,21 @@ object ConfigLoader {
     }
 
     fun loadStoreConfig(path: String): StoreConfig {
+        val wrapper = loadWorkspaceConfig(path)
+        return wrapper.appStore ?: throw IllegalArgumentException("配置中缺少 app_store 部分: ${File(path).absolutePath}")
+    }
+
+    fun loadPlayStoreConfig(path: String): PlayStoreConfig {
+        val wrapper = loadWorkspaceConfig(path)
+        return wrapper.playStore ?: throw IllegalArgumentException("配置中缺少 play_store 部分: ${File(path).absolutePath}")
+    }
+
+    fun loadWorkspaceConfig(path: String): WorkspaceConfig {
         val file = File(path)
         if (!file.exists()) {
             throw IllegalArgumentException("配置文件不存在: ${file.absolutePath}")
         }
-        val wrapper = json.decodeFromString<WorkspaceConfig>(file.readText())
-        return wrapper.appStore ?: throw IllegalArgumentException("配置中缺少 app_store 部分: ${file.absolutePath}")
+        return json.decodeFromString<WorkspaceConfig>(file.readText())
     }
 
     fun loadIapProducts(dirPath: String): List<IapProductConfig> {
