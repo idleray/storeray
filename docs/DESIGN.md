@@ -54,9 +54,9 @@
 
 工具采用标准的命令行子命令架构。你可以通过 `--help` 随时查看各层级的可用参数和功能。
 
-**1. 根命令 (StoreRay)**
+**1. 根命令 (storeray)**
 ```text
-Usage: store-ray [<options>] <command> [<args>]...
+Usage: storeray [<options>] <command> [<args>]...
 
   StoreRay — A lightweight CLI for App Store Connect & Google Play
 
@@ -67,12 +67,12 @@ Options:
 Commands:
   init           Initialize storeray workspace with templates
   iap            IAP (In-App Purchase) management tools
-  release-notes  Release Notes management tools
+  release-notes  Release Notes management tools [alias: rn]
 ```
 
 **2. 初始化命令 (init)**
 ```text
-Usage: store-ray init [<options>]
+Usage: storeray init [<options>]
 
   Initialize storeray workspace with templates
 
@@ -82,7 +82,7 @@ Options:
 
 **3. IAP 同步命令 (iap sync)**
 ```text
-Usage: store-ray iap sync [<options>]
+Usage: storeray iap sync [<options>]
 
   Sync IAP localization metadata
 
@@ -92,9 +92,9 @@ Options:
   -h, --help         Show this message and exit
 ```
 
-**3. IAP 查看命令 (iap inspect)**
+**4. IAP 查看命令 (iap inspect)**
 ```text
-Usage: store-ray iap inspect [<options>] <product_id>
+Usage: storeray iap inspect [<options>] <product_id>
 
   Inspect details and online localizations of a single IAP product
 
@@ -105,7 +105,7 @@ Options:
 
 **5. Release Notes 更新命令 (release-notes update)**
 ```text
-Usage: store-ray release-notes update [<options>]
+Usage: storeray release-notes update [<options>]
 
   Update Release Notes for the pending version
 
@@ -119,11 +119,12 @@ Options:
 
 **常用执行示例：**
 ```bash
-# 预览 Release Notes 更新（自动检测待提交版本）
-storeray release-notes update
+# 预览 Release Notes 更新（使用快捷别名 rn，自动检测待提交版本）
+storeray rn update
+# 也可以使用完整命令：storeray release-notes update
 
 # 确认并执行 Release Notes 更新
-storeray release-notes update --apply
+storeray rn update --apply
 
 # 预览 IAP 同步变化（dry-run）
 storeray iap sync --platform appstore
