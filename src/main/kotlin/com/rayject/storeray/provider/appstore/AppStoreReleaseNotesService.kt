@@ -19,6 +19,18 @@ class AppStoreReleaseNotesService(
         return appIdCache!!
     }
 
+    override suspend fun fetchEditableVersion(): String {
+        val appId = getAppId()
+        val versions = api.fetchEditableAppStoreVersions(appId)
+        
+        if (versions.isEmpty()) {
+            throw RuntimeException("No editable version found. Please create a new version in App Store Connect first.")
+        }
+        
+        return versions.first().attributes?.get("versionString")?.jsonPrimitive?.content
+            ?: throw RuntimeException("Failed to read version string from App Store Connect response.")
+    }
+
     private suspend fun getVersionId(appVersion: String): String {
         val appId = getAppId()
         val versions = api.fetchAppStoreVersions(appId, appVersion)

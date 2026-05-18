@@ -103,6 +103,14 @@ class AppStoreConnectApi(private val token: String) {
         return body.data.filter { it.type == "appStoreVersions" }
     }
 
+    suspend fun fetchEditableAppStoreVersions(appId: String): List<AscResource> {
+        val response = get("$baseUrl/apps/$appId/appStoreVersions", mapOf(
+            "filter[appStoreState]" to "PREPARE_FOR_SUBMISSION"
+        ))
+        val body: AscListResponse<AscResource> = response.body()
+        return body.data.filter { it.type == "appStoreVersions" }
+    }
+
     suspend fun fetchAppStoreVersionLocalizations(versionId: String): List<AscResource> {
         val response = get("$baseUrl/appStoreVersions/$versionId/appStoreVersionLocalizations")
         val body: AscListResponse<AscResource> = response.body()

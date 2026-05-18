@@ -103,11 +103,11 @@ Options:
   -h, --help         Show this message and exit
 ```
 
-**4. Release Notes 更新命令 (release-notes update)**
+**5. Release Notes 更新命令 (release-notes update)**
 ```text
-Usage: store-ray release-notes update [<options>] <app_version>
+Usage: store-ray release-notes update [<options>]
 
-  Update Release Notes for a specific version
+  Update Release Notes for the pending version
 
 Options:
   --apply            Apply changes to the store (default: dry-run)
@@ -115,10 +115,15 @@ Options:
   -h, --help         Show this message and exit
 ```
 
+> **说明**：工具会自动检测 App Store Connect 上处于 `PREPARE_FOR_SUBMISSION` 状态的版本，并以该版本号去 `metadata/release_notes/` 目录下匹配对应的 JSON 文件（如 `1.3.0.json`）。无需手动指定版本号。
+
 **常用执行示例：**
 ```bash
-# 执行 Release Notes 更新（需指定线上版本号）
-storeray release-notes update --platform appstore 1.2.0
+# 预览 Release Notes 更新（自动检测待提交版本）
+storeray release-notes update
+
+# 确认并执行 Release Notes 更新
+storeray release-notes update --apply
 
 # 预览 IAP 同步变化（dry-run）
 storeray iap sync --platform appstore

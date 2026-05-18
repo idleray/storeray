@@ -16,10 +16,13 @@ interface StoreProvider {
 }
 
 interface ReleaseNotesService {
-    /** 获取指定版本当前的 release notes */
+    /** Fetch the version currently in editable state (e.g., PREPARE_FOR_SUBMISSION) */
+    suspend fun fetchEditableVersion(): String
+
+    /** Fetch release notes for a specific version */
     suspend fun fetch(appVersion: String): Map<String, String>
 
-    /** 更新指定版本的 release notes */
+    /** Update release notes for a specific version */
     suspend fun update(appVersion: String, notes: Map<String, String>)
 }
 
