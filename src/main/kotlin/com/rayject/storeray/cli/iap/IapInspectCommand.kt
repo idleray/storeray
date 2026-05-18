@@ -17,7 +17,7 @@ class IapInspectCommand : CliktCommand(
 
     private val productId by argument(help = "Product ID (e.g., com.rayject.fluente.xxx)")
     
-    private val platform by option("--platform", help = "Target store platform (appstore, playstore)").default("appstore")
+    private val platform by option("-p", "--platform", help = "Target store platform (appstore, playstore)").default("appstore")
     
     override fun run() = runBlocking {
         try {

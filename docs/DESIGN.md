@@ -87,9 +87,9 @@ Usage: storeray iap sync [<options>]
   Sync IAP localization metadata
 
 Options:
-  --apply            Apply changes to the store (default: dry-run)
-  --platform=<text>  Target store platform (appstore, playstore)
-  -h, --help         Show this message and exit
+  --apply                Apply changes to the store (default: dry-run)
+  -p, --platform=<text>  Target store platform (appstore, playstore)
+  -h, --help             Show this message and exit
 ```
 
 **4. IAP 查看命令 (iap inspect)**
@@ -99,8 +99,8 @@ Usage: storeray iap inspect [<options>] <product_id>
   Inspect details and online localizations of a single IAP product
 
 Options:
-  --platform=<text>  Target store platform (appstore, playstore)
-  -h, --help         Show this message and exit
+  -p, --platform=<text>  Target store platform (appstore, playstore)
+  -h, --help             Show this message and exit
 ```
 
 **5. Release Notes 更新命令 (release-notes update)**
@@ -110,9 +110,9 @@ Usage: storeray release-notes update [<options>]
   Update Release Notes for the pending version
 
 Options:
-  --apply            Apply changes to the store (default: dry-run)
-  --platform=<text>  Target store platform (appstore, playstore)
-  -h, --help         Show this message and exit
+  --apply                Apply changes to the store (default: dry-run)
+  -p, --platform=<text>  Target store platform (appstore, playstore)
+  -h, --help             Show this message and exit
 ```
 
 > **说明**：工具会自动检测 App Store Connect 上处于 `PREPARE_FOR_SUBMISSION` 状态的版本，并以该版本号去 `metadata/release_notes/` 目录下匹配对应的 JSON 文件（如 `1.3.0.json`）。无需手动指定版本号。

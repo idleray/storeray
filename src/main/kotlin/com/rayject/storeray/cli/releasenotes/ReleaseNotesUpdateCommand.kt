@@ -18,7 +18,7 @@ class ReleaseNotesUpdateCommand : CliktCommand(
 
     private val apply by option("--apply", help = "Apply changes to the store (default: dry-run)").flag(default = false)
     
-    private val platform by option("--platform", help = "Target store platform (appstore, playstore)").default("appstore")
+    private val platform by option("-p", "--platform", help = "Target store platform (appstore, playstore)").default("appstore")
     
     override fun run() = runBlocking {
         try {
