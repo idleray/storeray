@@ -44,6 +44,12 @@ class PlayStorePublisherApi(
         }
     }
 
+    suspend fun fetchTracks(): List<Track> = withContext(Dispatchers.IO) {
+        withEdit(commit = false) { editId ->
+            publisher.edits().tracks().list(packageName, editId).execute().tracks.orEmpty()
+        }
+    }
+
     suspend fun updateProductionTrack(update: (Track) -> Unit) = withContext(Dispatchers.IO) {
         withEdit(commit = true) { editId ->
             val track = publisher.edits().tracks().get(packageName, editId, PRODUCTION_TRACK).execute()

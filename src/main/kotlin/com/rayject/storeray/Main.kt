@@ -9,6 +9,7 @@ import com.rayject.storeray.cli.iap.IapInspectCommand
 import com.rayject.storeray.cli.iap.IapSyncCommand
 import com.rayject.storeray.cli.releasenotes.ReleaseNotesCommand
 import com.rayject.storeray.cli.releasenotes.ReleaseNotesUpdateCommand
+import com.rayject.storeray.cli.releasenotes.PlayStoreTracksCommand
 
 fun main(args: Array<String>) {
     StoreRay()
@@ -19,7 +20,8 @@ fun main(args: Array<String>) {
                 IapInspectCommand()
             ),
             ReleaseNotesCommand().subcommands(
-                ReleaseNotesUpdateCommand()
+                ReleaseNotesUpdateCommand(),
+                PlayStoreTracksCommand()
             )
         )
         .main(args)
