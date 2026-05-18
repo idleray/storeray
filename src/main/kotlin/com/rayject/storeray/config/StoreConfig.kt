@@ -17,3 +17,10 @@ data class StoreConfig(
     @SerialName("bundle_id")
     val bundleId: String
 )
+
+@Serializable
+data class WorkspaceConfig(
+    @SerialName("app_store")
+    val appStore: StoreConfig? = null
+)
+

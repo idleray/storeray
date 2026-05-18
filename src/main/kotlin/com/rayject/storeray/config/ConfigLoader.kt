@@ -14,7 +14,8 @@ object ConfigLoader {
         if (!file.exists()) {
             throw IllegalArgumentException("配置文件不存在: ${file.absolutePath}")
         }
-        return json.decodeFromString(file.readText())
+        val wrapper = json.decodeFromString<WorkspaceConfig>(file.readText())
+        return wrapper.appStore ?: throw IllegalArgumentException("配置中缺少 app_store 部分: ${file.absolutePath}")
     }
 
     fun loadIapProducts(dirPath: String): List<IapProductConfig> {
