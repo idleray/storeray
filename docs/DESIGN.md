@@ -112,15 +112,15 @@ Usage: storeray release-notes update [<options>]
 
 Options:
   --apply                Apply changes to the store (default: dry-run)
-  -p, --platform=<text>  Target store platform (appstore, playstore)
+  -p, --platform=<text>  Target store platform (appstore, playstore). If omitted, runs both in order.
   -h, --help             Show this message and exit
 ```
 
-> **说明**：App Store Connect 会自动检测处于 `PREPARE_FOR_SUBMISSION` 状态的版本，并以该版本号去 `metadata/release_notes/` 目录下匹配对应的 JSON 文件（如 `1.3.0.json`）。Google Play Store 只支持 `production` track 上的 `draft` 或 `completed` release，优先选择 `draft`；会从 release name 的 `version_code(version_name)` 或 `version_code (version_name)` 格式中解析 `version_name`，再匹配同名 JSON 文件。
+> **说明**：不指定 `--platform` 时会依次执行 App Store Connect 和 Google Play Store。App Store Connect 会自动检测处于 `PREPARE_FOR_SUBMISSION` 状态的版本，并以该版本号去 `metadata/release_notes/` 目录下匹配对应的 JSON 文件（如 `1.3.0.json`）。Google Play Store 只支持 `production` track 上的 `draft` 或 `completed` release，优先选择 `draft`；会从 release name 的 `version_code(version_name)` 或 `version_code (version_name)` 格式中解析 `version_name`，再匹配同名 JSON 文件。
 
 **常用执行示例：**
 ```bash
-# 预览 Release Notes 更新（使用快捷别名 rn，自动检测待提交版本）
+# 预览 Release Notes 更新（默认依次执行 App Store Connect 和 Google Play Store）
 storeray rn update
 # 也可以使用完整命令：storeray release-notes update
 
