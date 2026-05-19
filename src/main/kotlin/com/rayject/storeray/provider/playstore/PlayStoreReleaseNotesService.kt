@@ -31,21 +31,32 @@ class PlayStoreReleaseNotesService(
                 if (language.isNullOrBlank()) {
                     null
                 } else {
-                    language to (note.text ?: "")
+                    PlayStoreLocaleMapper.toAppStoreLocale(language) to (note.text ?: "")
                 }
             }
-            .toMap()
+            .groupingBy { it.first }
+            .aggregate { _, accumulator: String?, element, _ ->
+                accumulator ?: element.second
+            }
+            .mapValues { it.value.orEmpty() }
     }
 
     override suspend fun fetchSupportedLocales(appVersion: String): Set<String> {
         return api.fetchListingLocales()
+            .map { PlayStoreLocaleMapper.toAppStoreLocale(it) }
+            .toSet()
     }
 
     override suspend fun update(appVersion: String, notes: Map<String, String>) {
         api.updateProductionTrack { track ->
             val release = selectDraftReleaseByVersion(track, appVersion)
             val existingNotes = release.releaseNotes.orEmpty()
-            val localLanguages = notes.keys
+            val playStoreNotes = notes.flatMap { (locale, text) ->
+                PlayStoreLocaleMapper.toPlayStoreLocales(locale).map { playStoreLocale ->
+                    playStoreLocale to text
+                }
+            }.toMap()
+            val localLanguages = playStoreNotes.keys
 
             val mergedNotes = mutableListOf<LocalizedText>()
             val existingLanguages = mutableSetOf<String>()
@@ -57,11 +68,11 @@ class PlayStoreReleaseNotesService(
                 }
 
                 existingLanguages.add(language)
-                val text = if (language in localLanguages) notes.getValue(language).trim() else existing.text
+                val text = if (language in localLanguages) playStoreNotes.getValue(language).trim() else existing.text
                 mergedNotes.add(LocalizedText().setLanguage(language).setText(text))
             }
 
-            for ((language, text) in notes) {
+            for ((language, text) in playStoreNotes) {
                 if (language !in existingLanguages) {
                     mergedNotes.add(LocalizedText().setLanguage(language).setText(text.trim()))
                 }
