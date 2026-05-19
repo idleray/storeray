@@ -22,6 +22,12 @@ interface ReleaseNotesService {
     /** Fetch locales supported by the store metadata for a specific version */
     suspend fun fetchSupportedLocales(appVersion: String): Set<String> = fetch(appVersion).keys
 
+    /** Fetch release-note locales present in the store but unsupported by current store metadata */
+    suspend fun fetchUnsupportedLocales(appVersion: String): Set<String> = emptySet()
+
+    /** Map local release-note locale keys to the store locale keys that will be updated */
+    fun targetLocalesFor(localLocale: String): List<String> = listOf(localLocale)
+
     /** Fetch release notes for a specific version */
     suspend fun fetch(appVersion: String): Map<String, String>
 

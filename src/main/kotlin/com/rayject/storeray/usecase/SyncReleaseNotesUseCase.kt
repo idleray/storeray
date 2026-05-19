@@ -20,6 +20,7 @@ class SyncReleaseNotesUseCase(
             Console.info("Fetching remote Release Notes for version $appVersion...")
             val existingNotes = releaseNotesService.fetch(appVersion)
             val supportedLocales = releaseNotesService.fetchSupportedLocales(appVersion)
+            val unsupportedStoreLocales = releaseNotesService.fetchUnsupportedLocales(appVersion).sorted()
 
             val missingLocalLocales = supportedLocales
                 .filter { it !in localNotes.keys }
@@ -32,6 +33,14 @@ class SyncReleaseNotesUseCase(
                 }
                 Console.divider()
             }
+
+            if (unsupportedStoreLocales.isNotEmpty()) {
+                Console.warning("Store has ${unsupportedStoreLocales.size} unsupported release-note locale(s):")
+                unsupportedStoreLocales.forEach { locale ->
+                    Console.detail("[-] $locale: Unsupported by store listings; will be removed on apply")
+                }
+                Console.divider()
+            }
             
             val localNotesToUpdate = mutableMapOf<String, String>()
             
@@ -41,22 +50,33 @@ class SyncReleaseNotesUseCase(
                 
                 if (newContent != oldContent) {
                     localNotesToUpdate[locale] = newContent
-                    Console.detail("[~] $locale: Needs update")
+                    Console.detail("[~] ${locale.displayWithTargets()}: Needs update")
                     Console.detail("    Old: \"$oldContent\"")
                     Console.detail("    New: \"$newContent\"")
                 } else {
-                    Console.detail("[=] $locale: Up to date")
+                    Console.detail("[=] ${locale.displayWithTargets()}: Up to date")
                 }
             }
             
             Console.divider()
             
-            if (localNotesToUpdate.isEmpty()) {
+            if (localNotesToUpdate.isEmpty() && unsupportedStoreLocales.isEmpty()) {
                 Console.success("All Release Notes are already up to date")
                 return
             }
             
-            Console.info("Total of ${localNotesToUpdate.size} languages need updating")
+            val targetUpdateCount = localNotesToUpdate.keys.sumOf { locale ->
+                releaseNotesService.targetLocalesFor(locale).size
+            }
+            val totalMessage = if (targetUpdateCount == localNotesToUpdate.size) {
+                "Total of ${localNotesToUpdate.size} languages need updating"
+            } else {
+                "Total of ${localNotesToUpdate.size} local languages / $targetUpdateCount store locales need updating"
+            }
+            Console.info(totalMessage)
+            if (unsupportedStoreLocales.isNotEmpty()) {
+                Console.info("Total of ${unsupportedStoreLocales.size} unsupported store locale(s) need cleanup")
+            }
             
             if (!dryRun) {
                 try {
@@ -72,6 +92,15 @@ class SyncReleaseNotesUseCase(
         } catch (e: Exception) {
             Console.error("An error occurred during sync: ${e.message}")
             e.printStackTrace()
+        }
+    }
+
+    private fun String.displayWithTargets(): String {
+        val targets = releaseNotesService.targetLocalesFor(this)
+        return if (targets.size == 1 && targets.first() == this) {
+            this
+        } else {
+            "$this -> ${targets.joinToString(", ")}"
         }
     }
 }

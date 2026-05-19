@@ -23,12 +23,13 @@ class PlayStoreReleaseNotesService(
     override suspend fun fetch(appVersion: String): Map<String, String> {
         val track = api.fetchProductionTrack()
         val release = selectDraftReleaseByVersion(track, appVersion)
+        val listingLocales = api.fetchListingLocales()
 
         return release.releaseNotes
             .orEmpty()
             .mapNotNull { note ->
                 val language = note.language
-                if (language.isNullOrBlank()) {
+                if (language.isNullOrBlank() || language !in listingLocales) {
                     null
                 } else {
                     PlayStoreLocaleMapper.toAppStoreLocale(language) to (note.text ?: "")
@@ -47,7 +48,25 @@ class PlayStoreReleaseNotesService(
             .toSet()
     }
 
+    override suspend fun fetchUnsupportedLocales(appVersion: String): Set<String> {
+        val track = api.fetchProductionTrack()
+        val release = selectDraftReleaseByVersion(track, appVersion)
+        val listingLocales = api.fetchListingLocales()
+
+        return release.releaseNotes
+            .orEmpty()
+            .mapNotNull { it.language?.takeIf { language -> language.isNotBlank() } }
+            .filter { it !in listingLocales }
+            .toSet()
+    }
+
+    override fun targetLocalesFor(localLocale: String): List<String> {
+        return PlayStoreLocaleMapper.toPlayStoreLocales(localLocale)
+    }
+
     override suspend fun update(appVersion: String, notes: Map<String, String>) {
+        val listingLocales = api.fetchListingLocales()
+
         api.updateProductionTrack { track ->
             val release = selectDraftReleaseByVersion(track, appVersion)
             val existingNotes = release.releaseNotes.orEmpty()
@@ -63,7 +82,7 @@ class PlayStoreReleaseNotesService(
 
             for (existing in existingNotes) {
                 val language = existing.language
-                if (language.isNullOrBlank()) {
+                if (language.isNullOrBlank() || language !in listingLocales) {
                     continue
                 }
 
