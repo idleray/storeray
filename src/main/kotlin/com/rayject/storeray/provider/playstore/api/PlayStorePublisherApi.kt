@@ -50,6 +50,17 @@ class PlayStorePublisherApi(
         }
     }
 
+    suspend fun fetchListingLocales(): Set<String> = withContext(Dispatchers.IO) {
+        withEdit(commit = false) { editId ->
+            publisher.edits().listings().list(packageName, editId)
+                .execute()
+                .listings
+                .orEmpty()
+                .mapNotNull { it.language?.takeIf { language -> language.isNotBlank() } }
+                .toSet()
+        }
+    }
+
     suspend fun updateProductionTrack(update: (Track) -> Unit) = withContext(Dispatchers.IO) {
         withEdit(commit = true) { editId ->
             val track = publisher.edits().tracks().get(packageName, editId, PRODUCTION_TRACK).execute()

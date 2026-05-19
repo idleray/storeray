@@ -37,6 +37,10 @@ class PlayStoreReleaseNotesService(
             .toMap()
     }
 
+    override suspend fun fetchSupportedLocales(appVersion: String): Set<String> {
+        return api.fetchListingLocales()
+    }
+
     override suspend fun update(appVersion: String, notes: Map<String, String>) {
         api.updateProductionTrack { track ->
             val release = selectDraftReleaseByVersion(track, appVersion)

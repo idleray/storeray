@@ -22,7 +22,15 @@ class PlayStoreTracksCommand : CliktCommand(
             )
 
             Console.info("Fetching Google Play tracks for ${config.packageName}...")
+            val listingLocales = api.fetchListingLocales().sorted()
             val tracks = api.fetchTracks()
+
+            Console.step("Listing locales")
+            if (listingLocales.isEmpty()) {
+                Console.detail("(No listings)")
+            } else {
+                Console.detail(listingLocales.joinToString(", "))
+            }
 
             if (tracks.isEmpty()) {
                 Console.warning("No tracks found.")

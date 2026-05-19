@@ -19,6 +19,19 @@ class SyncReleaseNotesUseCase(
         try {
             Console.info("Fetching remote Release Notes for version $appVersion...")
             val existingNotes = releaseNotesService.fetch(appVersion)
+            val supportedLocales = releaseNotesService.fetchSupportedLocales(appVersion)
+
+            val missingLocalLocales = supportedLocales
+                .filter { it !in localNotes.keys }
+                .sorted()
+
+            if (missingLocalLocales.isNotEmpty()) {
+                Console.warning("Store has ${missingLocalLocales.size} locale(s) missing from local release notes:")
+                missingLocalLocales.forEach { locale ->
+                    Console.detail("[!] $locale: Missing locally; remote text will be kept unchanged")
+                }
+                Console.divider()
+            }
             
             val localNotesToUpdate = mutableMapOf<String, String>()
             

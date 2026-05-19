@@ -19,6 +19,9 @@ interface ReleaseNotesService {
     /** Fetch the version currently in editable state (e.g., PREPARE_FOR_SUBMISSION) */
     suspend fun fetchEditableVersion(): String
 
+    /** Fetch locales supported by the store metadata for a specific version */
+    suspend fun fetchSupportedLocales(appVersion: String): Set<String> = fetch(appVersion).keys
+
     /** Fetch release notes for a specific version */
     suspend fun fetch(appVersion: String): Map<String, String>
 
