@@ -4,9 +4,7 @@ import com.rayject.storeray.model.AppInfoData
 import com.rayject.storeray.provider.AppInfoService
 import com.rayject.storeray.provider.appstore.api.AppStoreConnectApi
 import com.rayject.storeray.util.Console
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
 class AppStoreAppInfoService(
@@ -36,54 +34,40 @@ class AppStoreAppInfoService(
         val appInfo = appInfos.firstOrNull()
             ?: throw RuntimeException("No app info found for app ID: $appId")
         appInfoId = appInfo.id
-        val appInfoLocalizations = api.fetchAppInfoLocalizations(appInfo.id)
-        localeToAppInfoLocalizationId = appInfoLocalizations.mapNotNull { loc ->
-            val a = loc.attributes ?: return@mapNotNull null
-            val locale = a["locale"]?.jsonPrimitive?.content ?: return@mapNotNull null
-            locale to loc.id
-        }.toMap()
 
-        val nameAndSubtitle: Map<String, AppInfoLocalizationFields> = appInfoLocalizations.mapNotNull { loc ->
-            val a = loc.attributes ?: return@mapNotNull null
-            val locale = a["locale"]?.jsonPrimitive?.content ?: return@mapNotNull null
-            val name = a["name"]?.jsonPrimitive?.content ?: ""
-            val subtitle = a["subtitle"]?.jsonPrimitive?.content ?: ""
-            val privacyUrl = a["privacyPolicyUrl"]?.jsonPrimitive?.content ?: ""
-            locale to AppInfoLocalizationFields(name, subtitle, privacyUrl)
-        }.toMap()
+        val appInfoLocales = api.fetchTypedAppInfoLocalizations(appInfo.id)
+        localeToAppInfoLocalizationId = appInfoLocales.associate { it.id to it.attributes.locale }
+            .entries.associate { it.value to it.key }
+
+        val nameAndSubtitle = appInfoLocales.associate { entry ->
+            entry.attributes.locale to AppInfoLocalizationFields(
+                name = entry.attributes.name ?: "",
+                subtitle = entry.attributes.subtitle ?: "",
+                privacyPolicyUrl = entry.attributes.privacyPolicyUrl ?: ""
+            )
+        }
 
         val editableVersions = api.fetchEditableAppStoreVersions(appId)
-        val versionLocalizations = if (editableVersions.isNotEmpty()) {
+        val versionLocales = if (editableVersions.isNotEmpty()) {
             val vId = editableVersions.first().id
             versionId = vId
-            val locs = api.fetchAppStoreVersionLocalizations(vId)
-            localeToVersionLocalizationId = locs.mapNotNull { loc ->
-                val a = loc.attributes ?: return@mapNotNull null
-                val locale = a["locale"]?.jsonPrimitive?.content ?: return@mapNotNull null
-                locale to loc.id
-            }.toMap()
+            val locs = api.fetchTypedAppStoreVersionLocalizations(vId)
+            localeToVersionLocalizationId = locs.associate { it.attributes.locale to it.id }
             locs
         } else {
             Console.warning("No editable version found (PREPARE_FOR_SUBMISSION). Version-specific fields (description, keywords, etc.) will be empty and cannot be synced until a new version is created.")
             emptyList()
         }
 
-        val versionData: Map<String, AppStoreVersionFields> = versionLocalizations.mapNotNull { loc ->
-            val a = loc.attributes ?: return@mapNotNull null
-            val locale = a["locale"]?.jsonPrimitive?.content ?: return@mapNotNull null
-            val description = a["description"]?.jsonPrimitive?.content ?: ""
-            val keywords = a["keywords"]?.jsonPrimitive?.content ?: ""
-            val marketingUrl = a["marketingUrl"]?.jsonPrimitive?.content ?: ""
-            val promotionalText = a["promotionalText"]?.jsonPrimitive?.content ?: ""
-            val supportUrl = a["supportUrl"]?.jsonPrimitive?.content ?: ""
-            locale to AppStoreVersionFields(
-                description = description,
-                keywords = keywords,
-                marketingUrl = marketingUrl,
-                promotionalText = promotionalText,
-                supportUrl = supportUrl
+        val versionData = versionLocales.associate { entry ->
+            entry.attributes.locale to AppStoreVersionFields(
+                description = entry.attributes.description ?: "",
+                keywords = entry.attributes.keywords ?: "",
+                marketingUrl = entry.attributes.marketingUrl ?: "",
+                promotionalText = entry.attributes.promotionalText ?: "",
+                supportUrl = entry.attributes.supportUrl ?: ""
             )
-        }.toMap()
+        }
 
         val allLocales = (nameAndSubtitle.keys + versionData.keys).toSet()
 
