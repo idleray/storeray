@@ -223,7 +223,7 @@ class AppStoreConnectApi(private val token: String) {
             header(HttpHeaders.Authorization, "Bearer $token")
             params.forEach { (k, v) -> parameter(k, v) }
         }
-        checkError(response)
+        checkError(response, "GET", url)
         return response
     }
 
@@ -233,7 +233,7 @@ class AppStoreConnectApi(private val token: String) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        checkError(response)
+        checkError(response, "POST", url, body)
         return response
     }
 
@@ -243,20 +243,21 @@ class AppStoreConnectApi(private val token: String) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        checkError(response)
+        checkError(response, "PATCH", url, body)
         return response
     }
 
-    private suspend fun checkError(response: HttpResponse) {
+    private suspend fun checkError(response: HttpResponse, method: String, url: String, body: JsonObject? = null) {
         if (!response.status.isSuccess()) {
             val errorBody = try {
                 response.body<AscErrorResponse>()
             } catch (e: Exception) {
                 null
             }
-            val errorMsg = errorBody?.errors?.joinToString(", ") { "${it.title}: ${it.detail}" }
+            val errorMsg = errorBody?.errors?.joinToString(", ") { "${it.code}: ${it.title} - ${it.detail}" }
                 ?: response.bodyAsText()
-            throw RuntimeException("API 错误 ${response.status.value}: $errorMsg")
+            val bodySnippet = if (body != null) body.toString().take(200) else ""
+            throw RuntimeException("API 错误 ${response.status.value} [$method $url]: $errorMsg | body=$bodySnippet")
         }
     }
 }

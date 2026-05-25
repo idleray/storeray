@@ -32,12 +32,17 @@ class AppInfoSyncCommand : CliktCommand(
             }
 
             var failures = 0
+            var appStoreChangedLocales = emptySet<String>()
             for (targetPlatform in platforms) {
                 Console.divider()
                 Console.step("App Info sync: ${targetPlatform.displayName()}")
 
                 try {
-                    syncPlatform(targetPlatform, dir, workspaceConfig)
+                    if (targetPlatform == Platform.APP_STORE) {
+                        appStoreChangedLocales = syncPlatform(targetPlatform, dir, workspaceConfig)
+                    } else {
+                        syncPlatform(targetPlatform, dir, workspaceConfig, appStoreChangedLocales)
+                    }
                 } catch (e: Exception) {
                     failures++
                     Console.error("${targetPlatform.displayName()} failed: ${e.message}")
@@ -53,7 +58,12 @@ class AppInfoSyncCommand : CliktCommand(
         }
     }
 
-    private suspend fun syncPlatform(platform: Platform, dir: String, workspaceConfig: com.rayject.storeray.config.WorkspaceConfig) {
+    private suspend fun syncPlatform(
+        platform: Platform,
+        dir: String,
+        workspaceConfig: com.rayject.storeray.config.WorkspaceConfig,
+        preChangedLocales: Set<String> = emptySet()
+    ): Set<String> {
         val provider = StoreProviderFactory.create(platform, workspaceConfig)
         val appInfoService = provider.appInfo()
 
@@ -61,15 +71,16 @@ class AppInfoSyncCommand : CliktCommand(
         if (localData.isEmpty()) {
             Console.error("No local app info data found.")
             Console.info("Use `storeray appinfo fetch` to download data first.")
-            return
+            return emptySet()
         }
 
         val useCase = SyncAppInfoUseCase(
             appInfoService = appInfoService,
-            localData = localData
+            localData = localData,
+            supportedFields = appInfoService.supportedFields()
         )
 
-        useCase.execute(dryRun = !apply)
+        return useCase.execute(dryRun = !apply, preChangedLocales = preChangedLocales)
     }
 
     private fun parsePlatform(value: String): Platform = when (value.lowercase()) {

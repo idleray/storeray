@@ -23,6 +23,16 @@ interface AppInfoService {
 
     /** Update app info for the given locales (create if not exists, update if exists) */
     suspend fun update(data: Map<String, AppInfoData>)
+
+    /** Fields that this service can read and write */
+    fun supportedFields(): Set<String> = ALL_FIELDS
+
+    companion object {
+        val ALL_FIELDS = setOf(
+            "name", "subtitle", "keywords", "description", "promotionalText",
+            "supportUrl", "marketingUrl", "privacyPolicyUrl", "video"
+        )
+    }
 }
 
 interface ReleaseNotesService {

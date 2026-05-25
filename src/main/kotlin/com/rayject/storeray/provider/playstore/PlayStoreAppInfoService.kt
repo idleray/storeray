@@ -8,6 +8,8 @@ class PlayStoreAppInfoService(
     private val api: PlayStorePublisherApi
 ) : AppInfoService {
 
+    override fun supportedFields(): Set<String> = setOf("video")
+
     override suspend fun fetch(): Map<String, AppInfoData> {
         val listings = api.fetchListings()
 

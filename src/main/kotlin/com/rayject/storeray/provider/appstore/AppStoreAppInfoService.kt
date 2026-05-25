@@ -41,9 +41,9 @@ class AppStoreAppInfoService(
 
         val nameAndSubtitle = appInfoLocales.associate { entry ->
             entry.attributes.locale to AppInfoLocalizationFields(
-                name = entry.attributes.name ?: "",
-                subtitle = entry.attributes.subtitle ?: "",
-                privacyPolicyUrl = entry.attributes.privacyPolicyUrl ?: ""
+                name = (entry.attributes.name ?: "").trim(),
+                subtitle = (entry.attributes.subtitle ?: "").trim(),
+                privacyPolicyUrl = (entry.attributes.privacyPolicyUrl ?: "").trim()
             )
         }
 
@@ -61,11 +61,11 @@ class AppStoreAppInfoService(
 
         val versionData = versionLocales.associate { entry ->
             entry.attributes.locale to AppStoreVersionFields(
-                description = entry.attributes.description ?: "",
-                keywords = entry.attributes.keywords ?: "",
-                marketingUrl = entry.attributes.marketingUrl ?: "",
-                promotionalText = entry.attributes.promotionalText ?: "",
-                supportUrl = entry.attributes.supportUrl ?: ""
+                description = (entry.attributes.description ?: "").trim(),
+                keywords = (entry.attributes.keywords ?: "").trim(),
+                marketingUrl = (entry.attributes.marketingUrl ?: "").trim(),
+                promotionalText = (entry.attributes.promotionalText ?: "").trim(),
+                supportUrl = (entry.attributes.supportUrl ?: "").trim()
             )
         }
 
