@@ -64,7 +64,7 @@ class AppStoreAppInfoService(
             }.toMap()
             locs
         } else {
-            Console.warning("No editable version found. Version-specific fields (description, keywords, etc.) will be empty.")
+            Console.warning("No editable version found (PREPARE_FOR_SUBMISSION). Version-specific fields (description, keywords, etc.) will be empty and cannot be synced until a new version is created.")
             emptyList()
         }
 
@@ -105,14 +105,23 @@ class AppStoreAppInfoService(
 
     override suspend fun update(data: Map<String, AppInfoData>) {
         val aId = appInfoId ?: throw RuntimeException("App info ID not available. Call fetch() first.")
-        val vId = versionId
+        val hasVersionFields = data.values.any {
+            it.description.isNotBlank() || it.keywords.isNotBlank() ||
+            it.marketingUrl.isNotBlank() || it.promotionalText.isNotBlank() || it.supportUrl.isNotBlank()
+        }
+        if (hasVersionFields && versionId == null) {
+            throw RuntimeException(
+                "No editable version found in App Store Connect. " +
+                "Version-specific fields (description, keywords, marketingUrl, promotionalText, supportUrl) " +
+                "require a version in PREPARE_FOR_SUBMISSION state. " +
+                "Please create a new version in App Store Connect first, then retry."
+            )
+        }
 
         for ((locale, info) in data) {
             updateAppInfoLocalization(aId, locale, info)
-            if (vId != null) {
-                updateVersionLocalization(vId, locale, info)
-            } else {
-                Console.warning("No editable version; skipping version-specific fields for $locale")
+            if (versionId != null) {
+                updateVersionLocalization(versionId!!, locale, info)
             }
         }
     }
