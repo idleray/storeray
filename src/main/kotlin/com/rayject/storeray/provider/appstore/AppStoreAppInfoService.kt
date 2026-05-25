@@ -5,6 +5,7 @@ import com.rayject.storeray.provider.AppInfoService
 import com.rayject.storeray.provider.appstore.api.AppStoreConnectApi
 import com.rayject.storeray.util.Console
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 
 class AppStoreAppInfoService(
@@ -31,7 +32,9 @@ class AppStoreAppInfoService(
         val appId = getAppId()
 
         val appInfos = api.fetchAppInfos(appId)
-        val appInfo = appInfos.firstOrNull()
+        val appInfo = appInfos.firstOrNull { info ->
+            info.attributes?.get("appStoreState")?.jsonPrimitive?.content == "PREPARE_FOR_SUBMISSION"
+        } ?: appInfos.firstOrNull()
             ?: throw RuntimeException("No app info found for app ID: $appId")
         appInfoId = appInfo.id
 
@@ -102,11 +105,20 @@ class AppStoreAppInfoService(
             )
         }
 
+        var failures = 0
         for ((locale, info) in data) {
-            updateAppInfoLocalization(aId, locale, info)
-            if (versionId != null) {
-                updateVersionLocalization(versionId!!, locale, info)
+            try {
+                updateAppInfoLocalization(aId, locale, info)
+                if (versionId != null) {
+                    updateVersionLocalization(versionId!!, locale, info)
+                }
+            } catch (e: Exception) {
+                failures++
+                Console.warning("Skipped $locale: ${e.message}")
             }
+        }
+        if (failures > 0) {
+            Console.warning("$failures locale(s) failed. Other locales were updated successfully.")
         }
     }
 

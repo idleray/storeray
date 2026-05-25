@@ -254,7 +254,10 @@ class AppStoreConnectApi(private val token: String) {
             } catch (e: Exception) {
                 null
             }
-            val errorMsg = errorBody?.errors?.joinToString(", ") { "${it.code}: ${it.title} - ${it.detail}" }
+            val errorMsg = errorBody?.errors?.joinToString(", ") { err ->
+                val source = err.source?.let { " | source=${it.pointer}" } ?: ""
+                "${err.code}: ${err.title} - ${err.detail}$source"
+            }
                 ?: response.bodyAsText()
             val bodySnippet = if (body != null) body.toString().take(200) else ""
             throw RuntimeException("API 错误 ${response.status.value} [$method $url]: $errorMsg | body=$bodySnippet")

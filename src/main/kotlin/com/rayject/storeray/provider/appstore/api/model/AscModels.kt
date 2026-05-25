@@ -39,12 +39,18 @@ data class AscErrorResponse(
 )
 
 @Serializable
+data class AscErrorSource(
+    val pointer: String? = null
+)
+
+@Serializable
 data class AscError(
     val id: String? = null,
     val status: String,
     val code: String,
     val title: String,
-    val detail: String
+    val detail: String,
+    val source: AscErrorSource? = null
 )
 
 // ─── 专用类型：AppInfoLocalization ───
