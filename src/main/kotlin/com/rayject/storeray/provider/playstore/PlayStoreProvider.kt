@@ -1,6 +1,7 @@
 package com.rayject.storeray.provider.playstore
 
 import com.rayject.storeray.config.PlayStoreConfig
+import com.rayject.storeray.provider.AppInfoService
 import com.rayject.storeray.provider.IapService
 import com.rayject.storeray.provider.Platform
 import com.rayject.storeray.provider.ReleaseNotesService
@@ -23,7 +24,13 @@ class PlayStoreProvider(config: PlayStoreConfig) : StoreProvider {
         PlayStoreIapService()
     }
 
+    private val appInfoService by lazy {
+        PlayStoreAppInfoService(api)
+    }
+
     override fun releaseNotes(): ReleaseNotesService = releaseNotesService
 
     override fun iap(): IapService = iapService
+
+    override fun appInfo(): AppInfoService = appInfoService
 }

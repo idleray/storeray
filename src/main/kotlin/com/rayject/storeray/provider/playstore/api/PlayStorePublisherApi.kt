@@ -4,6 +4,7 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.androidpublisher.AndroidPublisher
 import com.google.api.services.androidpublisher.AndroidPublisherScopes
+import com.google.api.services.androidpublisher.model.Listing
 import com.google.api.services.androidpublisher.model.Track
 import com.google.auth.http.HttpCredentialsAdapter
 import com.google.auth.oauth2.GoogleCredentials
@@ -47,6 +48,15 @@ class PlayStorePublisherApi(
     suspend fun fetchTracks(): List<Track> = withContext(Dispatchers.IO) {
         withEdit(commit = false) { editId ->
             publisher.edits().tracks().list(packageName, editId).execute().tracks.orEmpty()
+        }
+    }
+
+    suspend fun fetchListings(): List<Listing> = withContext(Dispatchers.IO) {
+        withEdit(commit = false) { editId ->
+            publisher.edits().listings().list(packageName, editId)
+                .execute()
+                .listings
+                .orEmpty()
         }
     }
 

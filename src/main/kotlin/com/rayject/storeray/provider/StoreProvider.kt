@@ -1,5 +1,6 @@
 package com.rayject.storeray.provider
 
+import com.rayject.storeray.model.AppInfoData
 import com.rayject.storeray.model.LocalizationInfo
 import com.rayject.storeray.model.Subscription
 
@@ -13,6 +14,12 @@ interface StoreProvider {
     
     fun releaseNotes(): ReleaseNotesService
     fun iap(): IapService
+    fun appInfo(): AppInfoService
+}
+
+interface AppInfoService {
+    /** Fetch all app info localizations from the store */
+    suspend fun fetch(): Map<String, AppInfoData>
 }
 
 interface ReleaseNotesService {

@@ -1,6 +1,7 @@
 package com.rayject.storeray.provider.appstore
 
 import com.rayject.storeray.config.StoreConfig
+import com.rayject.storeray.provider.AppInfoService
 import com.rayject.storeray.provider.IapService
 import com.rayject.storeray.provider.Platform
 import com.rayject.storeray.provider.ReleaseNotesService
@@ -27,8 +28,11 @@ class AppStoreProvider(config: StoreConfig) : StoreProvider {
     // 延迟初始化具体的 Service
     private val releaseNotesService by lazy { AppStoreReleaseNotesService(api, config.bundleId) }
     private val iapService by lazy { AppStoreIapService(api, config.bundleId) }
+    private val appInfoService by lazy { AppStoreAppInfoService(api, config.bundleId) }
 
     override fun releaseNotes(): ReleaseNotesService = releaseNotesService
 
     override fun iap(): IapService = iapService
+
+    override fun appInfo(): AppInfoService = appInfoService
 }

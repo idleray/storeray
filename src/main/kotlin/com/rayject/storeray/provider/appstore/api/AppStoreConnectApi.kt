@@ -117,6 +117,18 @@ class AppStoreConnectApi(private val token: String) {
         return body.data.filter { it.type == "appStoreVersionLocalizations" }
     }
 
+    suspend fun fetchAppInfos(appId: String): List<AscResource> {
+        val response = get("$baseUrl/apps/$appId/appInfos")
+        val body: AscListResponse<AscResource> = response.body()
+        return body.data
+    }
+
+    suspend fun fetchAppInfoLocalizations(appInfoId: String): List<AscResource> {
+        val response = get("$baseUrl/appInfos/$appInfoId/appInfoLocalizations")
+        val body: AscListResponse<AscResource> = response.body()
+        return body.data
+    }
+
     suspend fun updateAppStoreVersionLocalization(localizationId: String, whatsNew: String) {
         val body = buildJsonObject {
             put("data", buildJsonObject {
