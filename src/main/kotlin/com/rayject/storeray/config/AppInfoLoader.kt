@@ -51,14 +51,13 @@ object AppInfoLoader {
             ?.toMap() ?: emptyMap()
     }
 
-    fun save(dirPath: String, data: Map<String, AppInfoData>) {
-        val existing = load(dirPath)
-
-        val merged = data.mapValues { (locale, newData) ->
-            val oldData = existing[locale]
-            if (oldData == null) {
-                newData
-            } else {
+    fun save(dirPath: String, data: Map<String, AppInfoData>, overwrite: Boolean = false) {
+        val writeData = if (overwrite) {
+            data
+        } else {
+            val existing = load(dirPath)
+            data.mapValues { (locale, newData) ->
+                val oldData = existing[locale] ?: return@mapValues newData
                 newData.copy(
                     name = newData.name.ifBlank { oldData.name },
                     subtitle = newData.subtitle.ifBlank { oldData.subtitle },
@@ -73,7 +72,7 @@ object AppInfoLoader {
             }
         }
 
-        for ((locale, appInfo) in merged) {
+        for ((locale, appInfo) in writeData) {
             val localeDir = File(dirPath, locale)
             localeDir.mkdirs()
 

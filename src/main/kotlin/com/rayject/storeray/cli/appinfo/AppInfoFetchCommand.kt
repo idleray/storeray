@@ -1,6 +1,7 @@
 package com.rayject.storeray.cli.appinfo
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.rayject.storeray.config.AppInfoLoader
 import com.rayject.storeray.config.ConfigLoader
@@ -13,6 +14,8 @@ class AppInfoFetchCommand : CliktCommand(
     name = "fetch"
 ) {
     override fun help(context: com.github.ajalt.clikt.core.Context) = "Fetch app info metadata from store to local"
+
+    private val force by option("--force", help = "Overwrite local data even if remote fields are empty").flag(default = false)
 
     private val platform by option("-p", "--platform", help = "Target store platform (appstore, playstore). If omitted, runs both.")
 
@@ -62,7 +65,8 @@ class AppInfoFetchCommand : CliktCommand(
         Console.info("Fetched ${data.size} locale(s) from ${platform.displayName()}")
 
         val appInfoDir = "$dir/metadata/app_info"
-        AppInfoLoader.save(appInfoDir, data)
+        if (force) Console.warning("Force mode: overwriting all local data with remote values")
+        AppInfoLoader.save(appInfoDir, data, overwrite = force)
 
         Console.success("Saved to $appInfoDir")
         Console.detail("Locales:")

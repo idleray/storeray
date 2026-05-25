@@ -113,11 +113,12 @@ Usage: storeray appinfo fetch [<options>]
   Fetch app info metadata from store to local
 
 Options:
+  --force                Overwrite local data even if remote fields are empty
   -p, --platform=<text>  Target store platform (appstore, playstore). If omitted, runs both in order.
   -h, --help             Show this message and exit
 ```
 
-> **说明**：App Store 为数据基准，拉取全部字段（name, subtitle, description, keywords, promotionalText 等）；Play Store 仅补充 App Store 没有的字段（如 `video`）。不传 `-p` 时依次执行两个平台，之前已下载的数据不会被覆盖。
+> **说明**：App Store 为数据基准，拉取全部字段（name, subtitle, description, keywords, promotionalText 等）；Play Store 仅补充 App Store 没有的字段（如 `video`）。不传 `-p` 时依次执行两个平台。默认仅合并差异（已有非空字段不被覆盖），加 `--force` 则以远程数据完全覆盖本地。
 
 **6. App Info 同步命令 (appinfo sync)**
 ```text
