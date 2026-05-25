@@ -71,6 +71,18 @@ class PlayStorePublisherApi(
         }
     }
 
+    suspend fun updateListing(locale: String, title: String, shortDescription: String, fullDescription: String, video: String) = withContext(Dispatchers.IO) {
+        withEdit(commit = true) { editId ->
+            val listing = Listing()
+                .setLanguage(locale)
+                .setTitle(title.ifBlank { null })
+                .setShortDescription(shortDescription.ifBlank { null })
+                .setFullDescription(fullDescription.ifBlank { null })
+                .setVideo(video.ifBlank { null })
+            publisher.edits().listings().update(packageName, editId, locale, listing).execute()
+        }
+    }
+
     suspend fun updateProductionTrack(update: (Track) -> Unit) = withContext(Dispatchers.IO) {
         withEdit(commit = true) { editId ->
             val track = publisher.edits().tracks().get(packageName, editId, PRODUCTION_TRACK).execute()

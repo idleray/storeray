@@ -21,4 +21,19 @@ class PlayStoreAppInfoService(
             )
         }.toMap()
     }
+
+    override suspend fun update(data: Map<String, AppInfoData>) {
+        for ((appStoreLocale, info) in data) {
+            val playStoreLocales = PlayStoreLocaleMapper.toPlayStoreLocales(appStoreLocale)
+            for (psLocale in playStoreLocales) {
+                api.updateListing(
+                    locale = psLocale,
+                    title = info.name,
+                    shortDescription = info.subtitle,
+                    fullDescription = info.description,
+                    video = info.video
+                )
+            }
+        }
+    }
 }

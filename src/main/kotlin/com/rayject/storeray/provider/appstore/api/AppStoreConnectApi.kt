@@ -142,6 +142,70 @@ class AppStoreConnectApi(private val token: String) {
         patch("$baseUrl/appStoreVersionLocalizations/$localizationId", body)
     }
 
+    suspend fun createAppStoreVersionLocalization(versionId: String, locale: String, attributes: JsonObject) {
+        val body = buildJsonObject {
+            put("data", buildJsonObject {
+                put("type", "appStoreVersionLocalizations")
+                put("attributes", buildJsonObject {
+                    put("locale", locale)
+                    attributes.forEach { (key, value) -> put(key, value) }
+                })
+                put("relationships", buildJsonObject {
+                    put("appStoreVersion", buildJsonObject {
+                        put("data", buildJsonObject {
+                            put("type", "appStoreVersions")
+                            put("id", versionId)
+                        })
+                    })
+                })
+            })
+        }
+        post("$baseUrl/appStoreVersionLocalizations", body)
+    }
+
+    suspend fun updateAppStoreVersionLocalizationAttributes(localizationId: String, attributes: JsonObject) {
+        val body = buildJsonObject {
+            put("data", buildJsonObject {
+                put("type", "appStoreVersionLocalizations")
+                put("id", localizationId)
+                put("attributes", attributes)
+            })
+        }
+        patch("$baseUrl/appStoreVersionLocalizations/$localizationId", body)
+    }
+
+    suspend fun createAppInfoLocalization(appInfoId: String, locale: String, attributes: JsonObject) {
+        val body = buildJsonObject {
+            put("data", buildJsonObject {
+                put("type", "appInfoLocalizations")
+                put("attributes", buildJsonObject {
+                    put("locale", locale)
+                    attributes.forEach { (key, value) -> put(key, value) }
+                })
+                put("relationships", buildJsonObject {
+                    put("appInfo", buildJsonObject {
+                        put("data", buildJsonObject {
+                            put("type", "appInfos")
+                            put("id", appInfoId)
+                        })
+                    })
+                })
+            })
+        }
+        post("$baseUrl/appInfoLocalizations", body)
+    }
+
+    suspend fun updateAppInfoLocalization(localizationId: String, attributes: JsonObject) {
+        val body = buildJsonObject {
+            put("data", buildJsonObject {
+                put("type", "appInfoLocalizations")
+                put("id", localizationId)
+                put("attributes", attributes)
+            })
+        }
+        patch("$baseUrl/appInfoLocalizations/$localizationId", body)
+    }
+
     private suspend fun get(url: String, params: Map<String, String> = emptyMap()): HttpResponse {
         val response = client.get(url) {
             header(HttpHeaders.Authorization, "Bearer $token")

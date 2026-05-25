@@ -119,7 +119,21 @@ Options:
 
 > **说明**：App Store 为数据基准，拉取全部字段（name, subtitle, description, keywords, promotionalText 等）；Play Store 仅补充 App Store 没有的字段（如 `video`）。不传 `-p` 时依次执行两个平台，之前已下载的数据不会被覆盖。
 
-**6. Release Notes 更新命令 (release-notes update)**
+**6. App Info 同步命令 (appinfo sync)**
+```text
+Usage: storeray appinfo sync [<options>]
+
+  Sync app info metadata to store (compare local vs remote, then create/update)
+
+Options:
+  --apply                Apply changes to the store (default: dry-run)
+  -p, --platform=<text>  Target store platform (appstore, playstore). If omitted, runs both in order.
+  -h, --help             Show this message and exit
+```
+
+> **说明**：sync 会逐 locale 比对本地与远程数据，显示每个字段的差异。新增 locale 自动 CREATE，已有字段变更执行 UPDATE，内容一致的跳过。Play Store 只支持 name/subtitle/description/video 四个字段。
+
+**7. Release Notes 更新命令 (release-notes update)**
 ```text
 Usage: storeray release-notes update [<options>]
 
@@ -150,6 +164,15 @@ storeray iap sync --platform appstore
 
 # 确认并执行 IAP 同步（带上 --apply）
 storeray iap sync --platform appstore --apply
+
+# 预览 App Info 同步（diff only）
+storeray appinfo sync
+
+# 确认并执行 App Info 同步
+storeray appinfo sync --apply
+
+# 只同步 App Store
+storeray appinfo sync --apply -p appstore
 
 # 查看线上指定产品的详细信息
 storeray iap inspect --platform appstore com.rayject.fluente.subscription.monthly
@@ -267,6 +290,49 @@ mkdir -p app_info/ko-KR
 ```
 
 所有字段可选，空字段会被忽略（不写入 `.txt` 文件；已存在的 `.txt` 文件会被删除）。
+
+**6. sync 流程（差异比较后增量更新）**
+
+`appinfo sync` 的执行流程：
+
+```
+                          ┌─────────────────────┐
+                          │  读取本地 app_info/  │
+                          │  每 locale 一组数据  │
+                          └─────────┬───────────┘
+                                    │
+                          ┌─────────▼───────────┐
+                          │  fetch 远程数据      │
+                          │  (同时缓存 locale →  │
+                          │   localization ID)   │
+                          └─────────┬───────────┘
+                                    │ 逐 locale 比较
+                          ┌─────────▼───────────┐
+                          │  差异比较             │
+                          │  ┌────────────────┐  │
+                          │  │ 本地有,远程无    │→→ CREATE
+                          │  │ 本地有,远程有,   │
+                          │  │ 内容不同         │→→ UPDATE
+                          │  │ 本地有,远程有,   │
+                          │  │ 内容相同         │→→ SKIP
+                          │  │ 本地无,远程有    │→→ SKIP(不删除)
+                          │  └────────────────┘  │
+                          └─────────┬───────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │  dry-run?                      │
+                    │  ├─ Yes → 打印差异，停止       │
+                    │  └─ No  → 调用 update()        │
+                    │          ├─ CREATE(新 locale)  │
+                    │          └─ UPDATE(已有 locale)│
+                    └───────────────────────────────┘
+```
+
+App Store 端会同时更新两个资源：
+- `AppInfoLocalization`：name, subtitle, privacyPolicyUrl
+- `AppStoreVersionLocalization`：description, keywords, marketingUrl, promotionalText, supportUrl
+
+Play Store 端通过 `edits().listings().update()` 更新，支持 title(name)、shortDescription(subtitle)、fullDescription(description)、video 四个字段。
 
 #### Release Notes 语言代码映射
 
@@ -467,6 +533,9 @@ interface IapService {
 interface AppInfoService {
     /** 从商店拉取所有语言的 App 元数据 */
     suspend fun fetch(): Map<String, AppInfoData>
+
+    /** 更新指定语言的 App 元数据（不存在则创建，存在则更新） */
+    suspend fun update(data: Map<String, AppInfoData>)
 }
 
 enum class Platform { APP_STORE, PLAY_STORE }
@@ -524,6 +593,7 @@ storeray/
 │   │
 │   ├── usecase/                        # UseCase 层 —— 业务逻辑
 │   │   ├── SyncIapUseCase.kt
+│   │   ├── SyncAppInfoUseCase.kt
 │   │   └── UpdateReleaseNotesUseCase.kt
 │   │
 │   ├── provider/                       # Provider 层 —— 平台抽象

@@ -20,6 +20,9 @@ interface StoreProvider {
 interface AppInfoService {
     /** Fetch all app info localizations from the store */
     suspend fun fetch(): Map<String, AppInfoData>
+
+    /** Update app info for the given locales (create if not exists, update if exists) */
+    suspend fun update(data: Map<String, AppInfoData>)
 }
 
 interface ReleaseNotesService {

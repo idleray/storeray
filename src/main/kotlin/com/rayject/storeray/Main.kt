@@ -6,6 +6,7 @@ import com.rayject.storeray.cli.InitCommand
 import com.rayject.storeray.cli.StoreRay
 import com.rayject.storeray.cli.appinfo.AppInfoCommand
 import com.rayject.storeray.cli.appinfo.AppInfoFetchCommand
+import com.rayject.storeray.cli.appinfo.AppInfoSyncCommand
 import com.rayject.storeray.cli.iap.IapCommand
 import com.rayject.storeray.cli.iap.IapInspectCommand
 import com.rayject.storeray.cli.iap.IapSyncCommand
@@ -26,7 +27,8 @@ fun main(args: Array<String>) {
                 PlayStoreTracksCommand()
             ),
             AppInfoCommand().subcommands(
-                AppInfoFetchCommand()
+                AppInfoFetchCommand(),
+                AppInfoSyncCommand()
             )
         )
         .main(args)
