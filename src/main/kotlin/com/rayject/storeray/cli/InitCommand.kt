@@ -51,7 +51,7 @@ class InitCommand : CliktCommand(
         }
 
         // Create template files
-        createFile(File(workspaceDir, "storeray.json"), STORERAY_JSON_TEMPLATE)
+        createFile(File(workspaceDir, "storeray.json.sample"), STORERAY_JSON_TEMPLATE)
         createFile(File(iapDir, "monthly.json"), IAP_TEMPLATE)
         createFile(File(releaseNotesDir, "1.0.0.json"), RELEASE_NOTES_TEMPLATE)
         createFile(File(enUsDir, "info.json"), APP_INFO_EN_US_JSON_TEMPLATE)
@@ -64,7 +64,7 @@ class InitCommand : CliktCommand(
         Console.divider()
         Console.success("Initialization complete!")
         Console.info("Next steps:")
-        Console.detail("1. Edit storeray.json with your App Store Connect and Google Play credentials.")
+        Console.detail("1. Rename storeray.json.sample to storeray.json and edit it with your credentials.")
         Console.detail("2. Add your IAP products in metadata/iap/.")
         Console.detail("3. Add release notes in metadata/release_notes/.")
         Console.detail("4. Add app info localizations in metadata/app_info/{locale}/.")
