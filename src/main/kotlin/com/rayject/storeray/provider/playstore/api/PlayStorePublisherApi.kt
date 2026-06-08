@@ -39,9 +39,9 @@ class PlayStorePublisherApi(
             .build()
     }
 
-    suspend fun fetchProductionTrack(): Track = withContext(Dispatchers.IO) {
+    suspend fun fetchTrack(trackName: String): Track = withContext(Dispatchers.IO) {
         withEdit(commit = false) { editId ->
-            publisher.edits().tracks().get(packageName, editId, PRODUCTION_TRACK).execute()
+            publisher.edits().tracks().get(packageName, editId, trackName).execute()
         }
     }
 
@@ -83,11 +83,11 @@ class PlayStorePublisherApi(
         }
     }
 
-    suspend fun updateProductionTrack(update: (Track) -> Unit) = withContext(Dispatchers.IO) {
+    suspend fun updateTrack(trackName: String, update: (Track) -> Unit) = withContext(Dispatchers.IO) {
         withEdit(commit = true) { editId ->
-            val track = publisher.edits().tracks().get(packageName, editId, PRODUCTION_TRACK).execute()
+            val track = publisher.edits().tracks().get(packageName, editId, trackName).execute()
             update(track)
-            publisher.edits().tracks().update(packageName, editId, PRODUCTION_TRACK, track).execute()
+            publisher.edits().tracks().update(packageName, editId, trackName, track).execute()
         }
     }
 
@@ -113,6 +113,5 @@ class PlayStorePublisherApi(
     }
 
     private companion object {
-        const val PRODUCTION_TRACK = "production"
     }
 }

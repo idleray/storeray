@@ -8,20 +8,21 @@ import com.rayject.storeray.provider.playstore.api.PlayStorePublisherApi
 import com.rayject.storeray.util.Console
 
 class PlayStoreReleaseNotesService(
-    private val api: PlayStorePublisherApi
+    private val api: PlayStorePublisherApi,
+    private val trackName: String
 ) : ReleaseNotesService {
 
     override suspend fun fetchEditableVersion(): String {
-        val track = api.fetchProductionTrack()
+        val track = api.fetchTrack(trackName)
         val release = selectSingleEditableRelease(track)
         val versionName = parseVersionName(release.name)
 
-        Console.detail("Selected Play Store production release: ${release.name} (${release.status})")
+        Console.detail("Selected Play Store $trackName release: ${release.name} (${release.status})")
         return versionName
     }
 
     override suspend fun fetch(appVersion: String): Map<String, String> {
-        val track = api.fetchProductionTrack()
+        val track = api.fetchTrack(trackName)
         val release = selectDraftReleaseByVersion(track, appVersion)
         val listingLocales = api.fetchListingLocales()
 
@@ -49,7 +50,7 @@ class PlayStoreReleaseNotesService(
     }
 
     override suspend fun fetchUnsupportedLocales(appVersion: String): Set<String> {
-        val track = api.fetchProductionTrack()
+        val track = api.fetchTrack(trackName)
         val release = selectDraftReleaseByVersion(track, appVersion)
         val listingLocales = api.fetchListingLocales()
 
@@ -67,7 +68,7 @@ class PlayStoreReleaseNotesService(
     override suspend fun update(appVersion: String, notes: Map<String, String>) {
         val listingLocales = api.fetchListingLocales()
 
-        api.updateProductionTrack { track ->
+        api.updateTrack(trackName) { track ->
             val release = selectDraftReleaseByVersion(track, appVersion)
             val existingNotes = release.releaseNotes.orEmpty()
             val playStoreNotes = notes.flatMap { (locale, text) ->
@@ -108,7 +109,7 @@ class PlayStoreReleaseNotesService(
             .sortedBy { EDITABLE_STATUSES.indexOf(it.status) }
 
         return when (editableReleases.size) {
-            0 -> throw RuntimeException("No draft or completed release found in Google Play production track.")
+            0 -> throw RuntimeException("No draft or completed release found in Google Play $trackName track.")
             1 -> editableReleases.first()
             else -> {
                 val draftReleases = editableReleases.filter { it.status == DRAFT_STATUS }
@@ -117,7 +118,7 @@ class PlayStoreReleaseNotesService(
                 }
 
                 val names = editableReleases.joinToString(", ") { "${it.name ?: "(unnamed)"} (${it.status ?: "unknown"})" }
-                throw RuntimeException("Multiple editable releases found in Google Play production track: $names")
+                throw RuntimeException("Multiple editable releases found in Google Play $trackName track: $names")
             }
         }
     }
@@ -130,7 +131,7 @@ class PlayStoreReleaseNotesService(
             .sortedBy { EDITABLE_STATUSES.indexOf(it.status) }
 
         return when (matches.size) {
-            0 -> throw RuntimeException("No draft or completed release matching version $appVersion found in Google Play production track.")
+            0 -> throw RuntimeException("No draft or completed release matching version $appVersion found in Google Play $trackName track.")
             1 -> matches.first()
             else -> {
                 val draftMatches = matches.filter { it.status == DRAFT_STATUS }
@@ -139,7 +140,7 @@ class PlayStoreReleaseNotesService(
                 }
 
                 val names = matches.joinToString(", ") { "${it.name ?: "(unnamed)"} (${it.status ?: "unknown"})" }
-                throw RuntimeException("Multiple editable releases match version $appVersion in Google Play production track: $names")
+                throw RuntimeException("Multiple editable releases match version $appVersion in Google Play $trackName track: $names")
             }
         }
     }

@@ -30,7 +30,7 @@ class AppStoreProvider(config: StoreConfig) : StoreProvider {
     private val iapService by lazy { AppStoreIapService(api, config.bundleId) }
     private val appInfoService by lazy { AppStoreAppInfoService(api, config.bundleId) }
 
-    override fun releaseNotes(): ReleaseNotesService = releaseNotesService
+    override fun releaseNotes(track: String): ReleaseNotesService = releaseNotesService
 
     override fun iap(): IapService = iapService
 

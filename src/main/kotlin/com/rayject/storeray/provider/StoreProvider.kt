@@ -12,7 +12,7 @@ enum class Platform {
 interface StoreProvider {
     val platform: Platform
     
-    fun releaseNotes(): ReleaseNotesService
+    fun releaseNotes(track: String = "production"): ReleaseNotesService
     fun iap(): IapService
     fun appInfo(): AppInfoService
 }

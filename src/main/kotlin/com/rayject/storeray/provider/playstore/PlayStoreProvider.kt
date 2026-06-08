@@ -16,10 +16,6 @@ class PlayStoreProvider(config: PlayStoreConfig) : StoreProvider {
         packageName = config.packageName
     )
 
-    private val releaseNotesService by lazy {
-        PlayStoreReleaseNotesService(api)
-    }
-
     private val iapService by lazy {
         PlayStoreIapService()
     }
@@ -28,7 +24,7 @@ class PlayStoreProvider(config: PlayStoreConfig) : StoreProvider {
         PlayStoreAppInfoService(api)
     }
 
-    override fun releaseNotes(): ReleaseNotesService = releaseNotesService
+    override fun releaseNotes(track: String): ReleaseNotesService = PlayStoreReleaseNotesService(api, track)
 
     override fun iap(): IapService = iapService
 

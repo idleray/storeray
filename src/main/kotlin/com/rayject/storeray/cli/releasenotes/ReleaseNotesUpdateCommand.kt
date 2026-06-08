@@ -3,6 +3,7 @@ package com.rayject.storeray.cli.releasenotes
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.default
 import com.rayject.storeray.config.WorkspaceConfig
 import com.rayject.storeray.config.ConfigLoader
 import com.rayject.storeray.provider.Platform
@@ -20,6 +21,8 @@ class ReleaseNotesUpdateCommand : CliktCommand(
     private val apply by option("--apply", help = "Apply changes to the store (default: dry-run)").flag(default = false)
     
     private val platform by option("-p", "--platform", help = "Target store platform (appstore, playstore). If omitted, runs both in order.")
+
+    private val track by option("-t", "--track", help = "Google Play track (e.g., internal, alpha, beta, production). Default: production").default("production")
     
     override fun run() = runBlocking {
         try {
@@ -41,7 +44,8 @@ class ReleaseNotesUpdateCommand : CliktCommand(
                     syncPlatform(
                         platform = targetPlatform,
                         workspaceConfig = workspaceConfig,
-                        releaseNotesDir = "$dir/metadata/release_notes"
+                        releaseNotesDir = "$dir/metadata/release_notes",
+                        track = track
                     )
                 } catch (e: Exception) {
                     failures++
@@ -61,10 +65,11 @@ class ReleaseNotesUpdateCommand : CliktCommand(
     private suspend fun syncPlatform(
         platform: Platform,
         workspaceConfig: WorkspaceConfig,
-        releaseNotesDir: String
+        releaseNotesDir: String,
+        track: String
     ) {
         val provider = StoreProviderFactory.create(platform, workspaceConfig)
-        val releaseNotesService: ReleaseNotesService = provider.releaseNotes()
+        val releaseNotesService: ReleaseNotesService = provider.releaseNotes(track)
 
         Console.info("Detecting editable version from ${platform.displayName()}...")
         val appVersion = releaseNotesService.fetchEditableVersion()
@@ -93,6 +98,6 @@ class ReleaseNotesUpdateCommand : CliktCommand(
 
     private fun Platform.displayName(): String = when (this) {
         Platform.APP_STORE -> "App Store Connect"
-        Platform.PLAY_STORE -> "Google Play production release"
+        Platform.PLAY_STORE -> "Google Play $track track"
     }
 }
