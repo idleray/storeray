@@ -1,0 +1,35 @@
+name: Update Homebrew Formula
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release checksum
+        run: |
+          gh release download "${{ github.event.release.tag_name }}" \
+            --pattern "*.sha256" \
+            --output /tmp/release.sha256 \
+            --repo "${{ github.repository }}"
+          echo "SHA256=$(cut -d' ' -f1 /tmp/release.sha256)" >> $GITHUB_ENV
+
+      - name: Clone homebrew-tap
+        run: |
+          git clone https://x-access-token:${{ secrets.HOMEBREW_TAP_TOKEN }}@github.com/idleray/homebrew-tap.git /tmp/homebrew-tap
+
+      - name: Update formula
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          cd /tmp/homebrew-tap
+          sed -i "s/version \".*\"/version \"$VERSION\"/" Formula/storeray.rb
+          sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" Formula/storeray.rb
+          git add Formula/storeray.rb
+          git -c user.name="storeray-bot" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Update storeray to v$VERSION"
+          git push
