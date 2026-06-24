@@ -8,6 +8,7 @@ A lightweight CLI for App Store Connect & Google Play metadata management.
 
 ```bash
 brew tap idleray/tap
+brew trust idleray/tap
 brew install storeray
 ```
 
